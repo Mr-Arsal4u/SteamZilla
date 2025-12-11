@@ -1,0 +1,501 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Booking;
+use App\Models\Package;
+use App\Models\Addon;
+use App\Models\Setting;
+use App\Models\GalleryImage;
+use App\Models\PageContent;
+use App\Models\GiftCard;
+use App\Models\GiftCardTransaction;
+use App\Models\ContactSubmission;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+
+class AdminController extends Controller
+{
+    // Middleware is applied via route middleware in web.php
+
+    // ==================== DASHBOARD ====================
+    public function dashboard()
+    {
+        // Analytics Stats
+        $stats = [
+            'total_bookings' => Booking::count(),
+            'pending_bookings' => Booking::where('status', 'pending')->count(),
+            'confirmed_bookings' => Booking::where('status', 'confirmed')->count(),
+            'completed_bookings' => Booking::where('status', 'completed')->count(),
+            'cancelled_bookings' => Booking::where('status', 'cancelled')->count(),
+            'total_revenue' => Booking::where('status', '!=', 'cancelled')->sum('total_price'),
+            'monthly_revenue' => Booking::where('status', '!=', 'cancelled')
+                ->whereMonth('created_at', now()->month)
+                ->sum('total_price'),
+            'total_packages' => Package::where('is_active', true)->count(),
+            'total_addons' => Addon::where('is_active', true)->count(),
+            'active_gift_cards' => GiftCard::when(
+                Schema::hasColumn('gift_cards', 'status'),
+                fn($q) => $q->where('status', 'active'),
+                fn($q) => $q->where('is_active', true)
+            )->count(),
+            'total_contact_submissions' => ContactSubmission::count(),
+            'unread_contact_submissions' => ContactSubmission::where('is_read', false)->count(),
+        ];
+
+        // Recent Bookings
+        $recentBookings = Booking::with(['package', 'bookingAddons.addon'])
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Recent Contact Submissions
+        $recentContactSubmissions = ContactSubmission::orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Revenue Chart Data (Last 6 months)
+        $revenueData = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $revenueData[] = [
+                'month' => $month->format('M Y'),
+                'revenue' => Booking::where('status', '!=', 'cancelled')
+                    ->whereYear('created_at', $month->year)
+                    ->whereMonth('created_at', $month->month)
+                    ->sum('total_price'),
+            ];
+        }
+
+        // Popular Packages
+        $popularPackages = Package::withCount('bookings')
+            ->orderBy('bookings_count', 'desc')
+            ->limit(5)
+            ->get();
+
+        return view('admin.dashboard', compact('stats', 'recentBookings', 'recentContactSubmissions', 'revenueData', 'popularPackages'));
+    }
+
+    // ==================== BOOKINGS MANAGEMENT ====================
+    public function bookings(Request $request)
+    {
+        $query = Booking::with(['package', 'bookingAddons.addon', 'giftCard']);
+
+        // Filters
+        if ($request->status) {
+            $query->where('status', $request->status);
+        }
+        if ($request->date_from) {
+            $query->whereDate('booking_date', '>=', $request->date_from);
+        }
+        if ($request->date_to) {
+            $query->whereDate('booking_date', '<=', $request->date_to);
+        }
+        if ($request->search) {
+            $query->where(function($q) use ($request) {
+                $q->where('user_name', 'like', '%' . $request->search . '%')
+                  ->orWhere('user_email', 'like', '%' . $request->search . '%')
+                  ->orWhere('user_phone', 'like', '%' . $request->search . '%')
+                  ->orWhere('address', 'like', '%' . $request->search . '%');
+            });
+        }
+
+        $bookings = $query->orderBy('created_at', 'desc')->paginate(20);
+        return view('admin.bookings.index', compact('bookings'));
+    }
+
+    public function showBooking($id)
+    {
+        $booking = Booking::with(['package', 'bookingAddons.addon', 'giftCard'])->findOrFail($id);
+        return view('admin.bookings.show', compact('booking'));
+    }
+
+    public function updateBookingStatus(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:pending,confirmed,completed,cancelled',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator);
+        }
+
+        $booking = Booking::findOrFail($id);
+        $booking->update(['status' => $request->status]);
+
+        return redirect()->back()->with('success', 'Booking status updated successfully.');
+    }
+
+    public function deleteBooking($id)
+    {
+        $booking = Booking::findOrFail($id);
+        $booking->delete();
+        return redirect()->route('admin.bookings')->with('success', 'Booking deleted successfully.');
+    }
+
+    // ==================== PAYMENTS MANAGEMENT ====================
+    public function payments(Request $request)
+    {
+        $query = Booking::with(['package', 'giftCard'])
+            ->where('status', '!=', 'cancelled');
+
+        if ($request->payment_method) {
+            $query->where('payment_method', $request->payment_method);
+        }
+        if ($request->date_from) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+        if ($request->date_to) {
+            $query->whereDate('created_at', '<=', $request->date_to);
+        }
+
+        $payments = $query->orderBy('created_at', 'desc')->paginate(20);
+        
+        $paymentStats = [
+            'total_revenue' => Booking::where('status', '!=', 'cancelled')->sum('total_price'),
+            'card_payments' => Booking::where('payment_method', 'card')->where('status', '!=', 'cancelled')->sum('total_price'),
+            'gift_card_payments' => Booking::where('payment_method', 'gift_card')->where('status', '!=', 'cancelled')->sum('total_price'),
+            'gift_card_discounts' => Booking::where('payment_method', 'gift_card')->sum('gift_card_discount'),
+        ];
+
+        return view('admin.payments.index', compact('payments', 'paymentStats'));
+    }
+
+    // ==================== PACKAGES MANAGEMENT ====================
+    public function packages()
+    {
+        $packages = Package::orderBy('created_at', 'desc')->get();
+        return view('admin.packages.index', compact('packages'));
+    }
+
+    public function createPackage()
+    {
+        return view('admin.packages.create');
+    }
+
+    public function storePackage(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'duration' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'features' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $features = $request->features ? json_encode(array_filter(array_map('trim', explode("\n", $request->features)))) : json_encode([]);
+
+        Package::create([
+            'name' => $request->name,
+            'price' => $request->price,
+            'duration' => $request->duration,
+            'description' => $request->description,
+            'features' => $features,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->route('admin.packages')->with('success', 'Package created successfully.');
+    }
+
+    public function editPackage($id)
+    {
+        $package = Package::findOrFail($id);
+        return view('admin.packages.edit', compact('package'));
+    }
+
+    public function updatePackage(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'duration' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'features' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $package = Package::findOrFail($id);
+        $features = $request->features ? json_encode(array_filter(array_map('trim', explode("\n", $request->features)))) : json_encode([]);
+
+        $package->update([
+            'name' => $request->name,
+            'price' => $request->price,
+            'duration' => $request->duration,
+            'description' => $request->description,
+            'features' => $features,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->route('admin.packages')->with('success', 'Package updated successfully.');
+    }
+
+    public function deletePackage($id)
+    {
+        $package = Package::findOrFail($id);
+        $package->delete();
+        return redirect()->route('admin.packages')->with('success', 'Package deleted successfully.');
+    }
+
+    // ==================== ADDONS MANAGEMENT ====================
+    public function addons()
+    {
+        $addons = Addon::orderBy('created_at', 'desc')->get();
+        return view('admin.addons.index', compact('addons'));
+    }
+
+    public function createAddon()
+    {
+        return view('admin.addons.create');
+    }
+
+    public function storeAddon(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'description' => 'nullable|string',
+            'category' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        Addon::create([
+            'name' => $request->name,
+            'price' => $request->price,
+            'description' => $request->description,
+            'category' => $request->category,
+            'has_quantity' => $request->has('has_quantity'),
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->route('admin.addons')->with('success', 'Addon created successfully.');
+    }
+
+    public function editAddon($id)
+    {
+        $addon = Addon::findOrFail($id);
+        return view('admin.addons.edit', compact('addon'));
+    }
+
+    public function updateAddon(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'description' => 'nullable|string',
+            'category' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $addon = Addon::findOrFail($id);
+        $addon->update([
+            'name' => $request->name,
+            'price' => $request->price,
+            'description' => $request->description,
+            'category' => $request->category,
+            'has_quantity' => $request->has('has_quantity'),
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->route('admin.addons')->with('success', 'Addon updated successfully.');
+    }
+
+    public function deleteAddon($id)
+    {
+        $addon = Addon::findOrFail($id);
+        $addon->delete();
+        return redirect()->route('admin.addons')->with('success', 'Addon deleted successfully.');
+    }
+
+    // ==================== SETTINGS MANAGEMENT ====================
+    public function settings()
+    {
+        $settings = Setting::orderBy('group')->orderBy('key')->get()->groupBy('group');
+        // Ensure all groups exist even if empty
+        $allGroups = ['general', 'home', 'about', 'contact', 'seo'];
+        foreach ($allGroups as $group) {
+            if (!isset($settings[$group])) {
+                $settings[$group] = collect([]);
+            }
+        }
+        return view('admin.settings.index', compact('settings'));
+    }
+
+    public function updateSettings(Request $request)
+    {
+        foreach ($request->except(['_token']) as $key => $value) {
+            if ($request->hasFile($key)) {
+                $file = $request->file($key);
+                $path = $file->store('settings', 'public');
+                Setting::set($key, $path, 'image', $request->get('group_' . $key, 'general'));
+            } else {
+                $group = $request->get('group_' . $key, 'general');
+                $type = $request->get('type_' . $key, 'text');
+                Setting::set($key, $value, $type, $group);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Settings updated successfully.');
+    }
+
+    // ==================== GALLERY MANAGEMENT ====================
+    public function gallery()
+    {
+        $images = GalleryImage::orderBy('order')->orderBy('created_at', 'desc')->get();
+        return view('admin.gallery.index', compact('images'));
+    }
+
+    public function storeGalleryImage(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'image' => 'required|image|max:5120',
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'category' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator);
+        }
+
+        $path = $request->file('image')->store('gallery', 'public');
+
+        GalleryImage::create([
+            'title' => $request->title,
+            'description' => $request->description,
+            'image_path' => $path,
+            'category' => $request->category,
+            'order' => GalleryImage::max('order') + 1,
+            'is_active' => true,
+        ]);
+
+        return redirect()->back()->with('success', 'Image uploaded successfully.');
+    }
+
+    public function updateGalleryImage(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'category' => 'nullable|string|max:255',
+            'order' => 'nullable|integer',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator);
+        }
+
+        $image = GalleryImage::findOrFail($id);
+        
+        if ($request->hasFile('image')) {
+            Storage::disk('public')->delete($image->image_path);
+            $path = $request->file('image')->store('gallery', 'public');
+            $image->image_path = $path;
+        }
+
+        $image->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'category' => $request->category,
+            'order' => $request->order ?? $image->order,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->back()->with('success', 'Image updated successfully.');
+    }
+
+    public function deleteGalleryImage($id)
+    {
+        $image = GalleryImage::findOrFail($id);
+        Storage::disk('public')->delete($image->image_path);
+        $image->delete();
+        return redirect()->back()->with('success', 'Image deleted successfully.');
+    }
+
+    // ==================== PAGE CONTENT MANAGEMENT ====================
+    public function pageContent($page)
+    {
+        $contents = PageContent::where('page', $page)->orderBy('section')->orderBy('order')->get()->groupBy('section');
+        return view('admin.pages.content', compact('page', 'contents'));
+    }
+
+    public function updatePageContent(Request $request, $page)
+    {
+        foreach ($request->except(['_token', 'page']) as $key => $value) {
+            $parts = explode('_', $key, 2);
+            if (count($parts) === 2) {
+                $section = $parts[0];
+                $fieldKey = $parts[1];
+                
+                if ($request->hasFile($key)) {
+                    $file = $request->file($key);
+                    $path = $file->store('pages', 'public');
+                    PageContent::setContent($page, $section, $fieldKey, $path, 'image');
+                } else {
+                    $type = strpos($key, 'html') !== false ? 'html' : 'text';
+                    PageContent::setContent($page, $section, $fieldKey, $value, $type);
+                }
+            }
+        }
+
+        return redirect()->back()->with('success', 'Page content updated successfully.');
+    }
+
+    // ==================== CONTACT SUBMISSIONS MANAGEMENT ====================
+    public function contactSubmissions()
+    {
+        $submissions = ContactSubmission::orderBy('created_at', 'desc')->paginate(20);
+        return view('admin.contact-submissions.index', compact('submissions'));
+    }
+
+    public function showContactSubmission($id)
+    {
+        $submission = ContactSubmission::findOrFail($id);
+        
+        // Mark as read if not already read
+        if (!$submission->is_read) {
+            $submission->update(['is_read' => true]);
+        }
+        
+        return view('admin.contact-submissions.show', compact('submission'));
+    }
+
+    public function markContactSubmissionRead($id)
+    {
+        $submission = ContactSubmission::findOrFail($id);
+        $submission->update(['is_read' => true]);
+        
+        return redirect()->back()->with('success', 'Submission marked as read.');
+    }
+
+    public function deleteContactSubmission($id)
+    {
+        $submission = ContactSubmission::findOrFail($id);
+        
+        // Delete image if exists
+        if ($submission->image_path) {
+            Storage::disk('public')->delete($submission->image_path);
+        }
+        
+        $submission->delete();
+        
+        return redirect()->route('admin.contact-submissions')->with('success', 'Contact submission deleted successfully.');
+    }
+}

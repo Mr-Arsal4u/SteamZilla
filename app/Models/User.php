@@ -21,6 +21,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'phone',
+        'address',
+        'avatar',
     ];
 
     /**
@@ -44,5 +48,25 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(\App\Models\Booking::class, 'user_email', 'email');
+    }
+
+    public function contactSubmissions()
+    {
+        return $this->hasMany(\App\Models\ContactSubmission::class, 'email', 'email');
+    }
+
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isUser()
+    {
+        return $this->role === 'user';
     }
 }
