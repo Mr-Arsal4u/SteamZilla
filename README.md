@@ -1,59 +1,174 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SteamZilla - Car Steam Cleaning Service Booking System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel web application for managing a mobile car steam cleaning service business. This application allows customers to view service packages, book appointments, and allows administrators to manage bookings, packages, and add-on services.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Public Features
+- **Home Page**: Landing page with value propositions (eco-friendly, water-saving, convenience, etc.)
+- **Packages Page**: Display all available service packages with pricing, duration, and features
+- **Add-Ons Section**: List of additional services customers can add to their booking
+- **Booking Form**: Comprehensive form to collect customer information and service preferences
+- **Contact Page**: Company information, contact details, and FAQ section
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Admin Features
+- **Admin Dashboard**: Overview of bookings with statistics
+- **Booking Management**: View, update status, and manage all customer bookings
+- **Package Management**: Create, edit, and delete service packages
+- **Add-On Management**: Create, edit, and delete add-on services
+- **Authentication**: Secure admin login system
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Requirements
 
-## Learning Laravel
+- PHP >= 8.2
+- Composer
+- MySQL or compatible database
+- Node.js and NPM (for frontend assets)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Installation
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+1. **Clone the repository** (if applicable) or navigate to the project directory:
+   ```bash
+   cd SteamZilla
+   ```
 
-## Laravel Sponsors
+2. **Install PHP dependencies**:
+   ```bash
+   composer install
+   ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+3. **Install frontend dependencies**:
+   ```bash
+   npm install
+   ```
 
-### Premium Partners
+4. **Set up environment file**:
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+5. **Configure database** in `.env`:
+   ```env
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=steamzilla
+   DB_USERNAME=your_username
+   DB_PASSWORD=your_password
+   ```
 
-## Contributing
+6. **Run migrations**:
+   ```bash
+   php artisan migrate
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+7. **Seed the database** with sample data:
+   ```bash
+   php artisan db:seed
+   ```
 
-## Code of Conduct
+8. **Build frontend assets**:
+   ```bash
+   npm run build
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+9. **Start the development server**:
+   ```bash
+   php artisan serve
+   ```
 
-## Security Vulnerabilities
+## Default Admin Credentials
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+After seeding, you can log in with:
+- **Email**: admin@steamzilla.com
+- **Password**: password
+
+**Important**: Change the admin password immediately after first login!
+
+## Database Schema
+
+### Tables
+- **packages**: Service packages (name, price, duration, features)
+- **addons**: Additional services (name, price, description, category)
+- **bookings**: Customer bookings (customer info, package, date/time, status)
+- **booking_addons**: Pivot table linking bookings to add-ons
+- **users**: Admin users for authentication
+
+## Usage
+
+### For Customers
+1. Visit the home page to learn about services
+2. Browse packages on the Packages page
+3. Click "Select Package" or "Book Now" to start booking
+4. Fill out the booking form with your details
+5. Select add-on services if desired
+6. Submit booking and receive confirmation
+
+### For Administrators
+1. Log in at `/admin/login`
+2. Access the dashboard to view booking statistics
+3. Manage bookings: view details, update status (pending, confirmed, completed, cancelled)
+4. Manage packages: create, edit, or delete service packages
+5. Manage add-ons: create, edit, or delete additional services
+
+## Routes
+
+### Public Routes
+- `/` - Home page
+- `/packages` - Service packages listing
+- `/contact` - Contact information
+- `/booking` - Booking form
+- `/booking/success/{id}` - Booking confirmation
+
+### Admin Routes (Protected)
+- `/admin/login` - Admin login
+- `/admin/dashboard` - Admin dashboard
+- `/admin/bookings` - Manage bookings
+- `/admin/bookings/{id}` - View booking details
+- `/admin/packages` - Manage packages
+- `/admin/addons` - Manage add-ons
+
+## Customization
+
+### Adding New Packages
+1. Log in as admin
+2. Navigate to "Manage Packages"
+3. Click "Create New Package"
+4. Fill in package details, features (one per line), and pricing
+
+### Adding New Add-Ons
+1. Log in as admin
+2. Navigate to "Manage Add-Ons"
+3. Click "Create New Add-On"
+4. Fill in add-on details, category, and pricing
+
+### Styling
+The application uses inline CSS in the main layout file (`resources/views/layouts/app.blade.php`). You can customize colors, fonts, and styles there.
+
+## Security Features
+
+- CSRF protection on all forms
+- Authentication middleware for admin routes
+- Password hashing for admin users
+- Input validation on all forms
+- SQL injection protection via Eloquent ORM
+
+## Future Enhancements
+
+- Email notifications for booking confirmations
+- Customer account system for returning customers
+- Payment integration
+- Calendar view for booking management
+- SMS notifications
+- API endpoints for mobile app integration
+- Image gallery for services
+- Customer reviews and ratings
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is open-sourced software licensed under the MIT license.
+
+## Support
+
+For issues or questions, please contact the development team.
