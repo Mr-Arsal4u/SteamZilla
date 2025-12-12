@@ -11,6 +11,9 @@ use App\Models\PageContent;
 use App\Models\GiftCard;
 use App\Models\GiftCardTransaction;
 use App\Models\ContactSubmission;
+use App\Models\Country;
+use App\Models\City;
+use App\Models\Place;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -497,5 +500,259 @@ class AdminController extends Controller
         $submission->delete();
         
         return redirect()->route('admin.contact-submissions')->with('success', 'Contact submission deleted successfully.');
+    }
+
+    // ==================== COUNTRIES MANAGEMENT ====================
+    public function countries()
+    {
+        $countries = Country::orderBy('sort_order')->orderBy('name')->get();
+        return view('admin.countries.index', compact('countries'));
+    }
+
+    public function createCountry()
+    {
+        return view('admin.countries.create');
+    }
+
+    public function storeCountry(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:3|unique:countries,code',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        Country::create([
+            'name' => $request->name,
+            'code' => $request->code ? strtoupper($request->code) : null,
+            'is_active' => $request->has('is_active'),
+            'sort_order' => $request->sort_order ?? 0,
+        ]);
+
+        return redirect()->route('admin.countries')->with('success', 'Country created successfully.');
+    }
+
+    public function editCountry($id)
+    {
+        $country = Country::findOrFail($id);
+        return view('admin.countries.edit', compact('country'));
+    }
+
+    public function updateCountry(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:3|unique:countries,code,' . $id,
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $country = Country::findOrFail($id);
+        $country->update([
+            'name' => $request->name,
+            'code' => $request->code ? strtoupper($request->code) : null,
+            'is_active' => $request->has('is_active'),
+            'sort_order' => $request->sort_order ?? 0,
+        ]);
+
+        return redirect()->route('admin.countries')->with('success', 'Country updated successfully.');
+    }
+
+    public function deleteCountry($id)
+    {
+        $country = Country::findOrFail($id);
+        $country->delete();
+        return redirect()->route('admin.countries')->with('success', 'Country deleted successfully.');
+    }
+
+    // ==================== CITIES MANAGEMENT ====================
+    public function cities(Request $request)
+    {
+        $query = City::with('country')->orderBy('sort_order')->orderBy('name');
+        
+        if ($request->country_id) {
+            $query->where('country_id', $request->country_id);
+        }
+
+        $cities = $query->get();
+        $countries = Country::where('is_active', true)->orderBy('name')->get();
+        
+        return view('admin.cities.index', compact('cities', 'countries'));
+    }
+
+    public function createCity()
+    {
+        $countries = Country::where('is_active', true)->orderBy('name')->get();
+        return view('admin.cities.create', compact('countries'));
+    }
+
+    public function storeCity(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'country_id' => 'required|exists:countries,id',
+            'name' => 'required|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        City::create([
+            'country_id' => $request->country_id,
+            'name' => $request->name,
+            'is_active' => $request->has('is_active'),
+            'sort_order' => $request->sort_order ?? 0,
+        ]);
+
+        return redirect()->route('admin.cities')->with('success', 'City created successfully.');
+    }
+
+    public function editCity($id)
+    {
+        $city = City::with('country')->findOrFail($id);
+        $countries = Country::where('is_active', true)->orderBy('name')->get();
+        return view('admin.cities.edit', compact('city', 'countries'));
+    }
+
+    public function updateCity(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'country_id' => 'required|exists:countries,id',
+            'name' => 'required|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $city = City::findOrFail($id);
+        $city->update([
+            'country_id' => $request->country_id,
+            'name' => $request->name,
+            'is_active' => $request->has('is_active'),
+            'sort_order' => $request->sort_order ?? 0,
+        ]);
+
+        return redirect()->route('admin.cities')->with('success', 'City updated successfully.');
+    }
+
+    public function deleteCity($id)
+    {
+        $city = City::findOrFail($id);
+        $city->delete();
+        return redirect()->route('admin.cities')->with('success', 'City deleted successfully.');
+    }
+
+    // ==================== PLACES MANAGEMENT ====================
+    public function places(Request $request)
+    {
+        $query = Place::with(['city.country'])->orderBy('sort_order')->orderBy('name');
+        
+        if ($request->city_id) {
+            $query->where('city_id', $request->city_id);
+        }
+        if ($request->country_id) {
+            $query->whereHas('city', function($q) use ($request) {
+                $q->where('country_id', $request->country_id);
+            });
+        }
+
+        $places = $query->get();
+        $countries = Country::where('is_active', true)->orderBy('name')->get();
+        $cities = City::where('is_active', true)->with('country')->orderBy('name')->get();
+        
+        return view('admin.places.index', compact('places', 'countries', 'cities'));
+    }
+
+    public function createPlace()
+    {
+        $countries = Country::where('is_active', true)->orderBy('name')->get();
+        $cities = City::where('is_active', true)->with('country')->orderBy('name')->get();
+        return view('admin.places.create', compact('countries', 'cities'));
+    }
+
+    public function storePlace(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'city_id' => 'required|exists:cities,id',
+            'name' => 'required|string|max:255',
+            'address' => 'nullable|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'zip_code' => 'nullable|string|max:20',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        Place::create([
+            'city_id' => $request->city_id,
+            'name' => $request->name,
+            'address' => $request->address,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'zip_code' => $request->zip_code,
+            'is_active' => $request->has('is_active'),
+            'sort_order' => $request->sort_order ?? 0,
+        ]);
+
+        return redirect()->route('admin.places')->with('success', 'Place created successfully.');
+    }
+
+    public function editPlace($id)
+    {
+        $place = Place::with(['city.country'])->findOrFail($id);
+        $countries = Country::where('is_active', true)->orderBy('name')->get();
+        $cities = City::where('is_active', true)->with('country')->orderBy('name')->get();
+        return view('admin.places.edit', compact('place', 'countries', 'cities'));
+    }
+
+    public function updatePlace(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'city_id' => 'required|exists:cities,id',
+            'name' => 'required|string|max:255',
+            'address' => 'nullable|string',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'zip_code' => 'nullable|string|max:20',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $place = Place::findOrFail($id);
+        $place->update([
+            'city_id' => $request->city_id,
+            'name' => $request->name,
+            'address' => $request->address,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'zip_code' => $request->zip_code,
+            'is_active' => $request->has('is_active'),
+            'sort_order' => $request->sort_order ?? 0,
+        ]);
+
+        return redirect()->route('admin.places')->with('success', 'Place updated successfully.');
+    }
+
+    public function deletePlace($id)
+    {
+        $place = Place::findOrFail($id);
+        $place->delete();
+        return redirect()->route('admin.places')->with('success', 'Place deleted successfully.');
     }
 }

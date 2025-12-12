@@ -98,8 +98,8 @@
                         For questions about these Terms and Conditions, please contact us at:
                     </p>
                     <p class="text-gray-700 leading-relaxed">
-                        <strong>Email:</strong> {{ \App\Models\Setting::get('contact_email', 'info@steamzila.com') }}<br>
-                        <strong>Phone:</strong> {{ \App\Models\Setting::get('contact_phone', '(555) 123-4567') }}
+                        <strong>Email:</strong> {{ \App\Models\Setting::get('contact_email', 'mrzilla89@thesteamzilla.com') }}<br>
+                        <strong>Phone:</strong> {{ \App\Models\Setting::get('contact_phone', '(413) 352-9444') }}
                     </p>
                 </section>
             </div>
