@@ -40,7 +40,7 @@
         </div>
         <div class="footer">
             <p>SteamZilla - Professional Car Steam Cleaning</p>
-            <p>info@steamzilla.com | (555) 123-4567</p>
+            <p>mrzilla89@thesteamzilla.com | (413) 352-9444</p>
         </div>
     </div>
 </body>

@@ -106,7 +106,7 @@ class HomeController extends Controller
         // You can uncomment this if you want email notifications
         /*
         try {
-            \Mail::to(Setting::get('contact_email', 'admin@steamzila.com'))->send(
+            \Mail::to(Setting::get('contact_email', 'mrzilla89@thesteamzilla.com'))->send(
                 new \App\Mail\ContactSubmissionNotification($validated, $imagePath)
             );
         } catch (\Exception $e) {
