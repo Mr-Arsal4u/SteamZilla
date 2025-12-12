@@ -36,6 +36,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/order-now', [BookingController::class, 'step1'])->name('order-now');
 Route::get('/booking/step1', [BookingController::class, 'step1'])->name('booking.step1');
 Route::post('/booking/step1', [BookingController::class, 'step1Store'])->name('booking.step1.store');
+Route::get('/api/cities/{countryId}', [BookingController::class, 'getCities'])->name('api.cities');
+Route::get('/api/places/{cityId}', [BookingController::class, 'getPlaces'])->name('api.places');
 Route::get('/booking/step2', [BookingController::class, 'step2'])->name('booking.step2');
 Route::post('/booking/step2', [BookingController::class, 'step2Store'])->name('booking.step2.store');
 Route::get('/booking/step3', [BookingController::class, 'step3'])->name('booking.step3');
@@ -99,6 +101,30 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/contact-submissions/{id}', [AdminController::class, 'showContactSubmission'])->name('contact-submissions.show');
         Route::post('/contact-submissions/{id}/mark-read', [AdminController::class, 'markContactSubmissionRead'])->name('contact-submissions.mark-read');
         Route::delete('/contact-submissions/{id}', [AdminController::class, 'deleteContactSubmission'])->name('contact-submissions.delete');
+        
+        // Countries Management
+        Route::get('/countries', [AdminController::class, 'countries'])->name('countries');
+        Route::get('/countries/create', [AdminController::class, 'createCountry'])->name('countries.create');
+        Route::post('/countries', [AdminController::class, 'storeCountry'])->name('countries.store');
+        Route::get('/countries/{id}/edit', [AdminController::class, 'editCountry'])->name('countries.edit');
+        Route::post('/countries/{id}', [AdminController::class, 'updateCountry'])->name('countries.update');
+        Route::delete('/countries/{id}', [AdminController::class, 'deleteCountry'])->name('countries.delete');
+        
+        // Cities Management
+        Route::get('/cities', [AdminController::class, 'cities'])->name('cities');
+        Route::get('/cities/create', [AdminController::class, 'createCity'])->name('cities.create');
+        Route::post('/cities', [AdminController::class, 'storeCity'])->name('cities.store');
+        Route::get('/cities/{id}/edit', [AdminController::class, 'editCity'])->name('cities.edit');
+        Route::post('/cities/{id}', [AdminController::class, 'updateCity'])->name('cities.update');
+        Route::delete('/cities/{id}', [AdminController::class, 'deleteCity'])->name('cities.delete');
+        
+        // Places Management
+        Route::get('/places', [AdminController::class, 'places'])->name('places');
+        Route::get('/places/create', [AdminController::class, 'createPlace'])->name('places.create');
+        Route::post('/places', [AdminController::class, 'storePlace'])->name('places.store');
+        Route::get('/places/{id}/edit', [AdminController::class, 'editPlace'])->name('places.edit');
+        Route::post('/places/{id}', [AdminController::class, 'updatePlace'])->name('places.update');
+        Route::delete('/places/{id}', [AdminController::class, 'deletePlace'])->name('places.delete');
     });
 
 // User Protected Routes

@@ -48,29 +48,70 @@
             <form action="{{ route('booking.step1.store') }}" method="POST" id="address-form">
                 @csrf
                 
-                <div class="mb-6">
-                    <label for="address" class="block text-lg font-semibold text-gray-900 mb-3">Car Location:</label>
-                    <textarea 
-                        id="address" 
-                        name="address" 
-                        rows="3"
-                        value="{{ old('address', $bookingData['address'] ?? '') }}"
-                        placeholder="Enter your full address (street, city, state, zip code)" 
-                        required
-                        class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#45A247] focus:border-[#45A247] transition"
-                        oninput="handleManualAddress()">{{ old('address', $bookingData['address'] ?? '') }}</textarea>
-                    <p class="text-sm text-gray-600 mt-2">Please provide your complete address where the service will be performed</p>
-                    <input type="hidden" id="latitude" name="latitude" value="{{ old('latitude', $bookingData['latitude'] ?? '') }}">
-                    <input type="hidden" id="longitude" name="longitude" value="{{ old('longitude', $bookingData['longitude'] ?? '') }}">
-                    <input type="hidden" id="place_id" name="place_id" value="{{ old('place_id', $bookingData['place_id'] ?? '') }}">
-                </div>
+                <div class="space-y-6">
+                    <div>
+                        <label for="country_id" class="block text-lg font-semibold text-gray-900 mb-3">Select Country *</label>
+                        <select 
+                            id="country_id" 
+                            name="country_id" 
+                            required
+                            class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#45A247] focus:border-[#45A247] transition"
+                            onchange="loadCities(this.value)">
+                            <option value="">-- Select Country --</option>
+                            @foreach($countries as $country)
+                                <option value="{{ $country->id }}" {{ old('country_id', $bookingData['country_id'] ?? '') == $country->id ? 'selected' : '' }}>
+                                    {{ $country->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
 
-                <!-- Optional: Map Preview (only if Google Maps API is available) -->
-                @if(env('GOOGLE_MAPS_API_KEY'))
-                <div id="map-preview" class="hidden mb-6 rounded-lg overflow-hidden border-2 border-gray-200" style="height: 300px;">
-                    <div id="map" style="height: 100%; width: 100%;"></div>
+                    <div>
+                        <label for="city_id" class="block text-lg font-semibold text-gray-900 mb-3">Select City *</label>
+                        <select 
+                            id="city_id" 
+                            name="city_id" 
+                            required
+                            class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#45A247] focus:border-[#45A247] transition"
+                            onchange="loadPlaces(this.value)"
+                            {{ empty($bookingData['country_id']) ? 'disabled' : '' }}>
+                            <option value="">-- Select City --</option>
+                            @foreach($cities as $city)
+                                <option value="{{ $city->id }}" {{ old('city_id', $bookingData['city_id'] ?? '') == $city->id ? 'selected' : '' }}>
+                                    {{ $city->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="place_id" class="block text-lg font-semibold text-gray-900 mb-3">Select Service Area *</label>
+                        <select 
+                            id="place_id" 
+                            name="place_id" 
+                            required
+                            class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#45A247] focus:border-[#45A247] transition"
+                            {{ empty($bookingData['city_id']) ? 'disabled' : '' }}>
+                            <option value="">-- Select Service Area --</option>
+                            @foreach($places as $place)
+                                <option value="{{ $place->id }}" {{ old('place_id', $bookingData['place_id'] ?? '') == $place->id ? 'selected' : '' }}>
+                                    {{ $place->name }}@if($place->address) - {{ $place->address }}@endif
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="text-sm text-gray-600 mt-2">Select the area where SteamZilla provides services</p>
+                    </div>
+
+                    <div>
+                        <label for="address" class="block text-lg font-semibold text-gray-900 mb-3">Additional Address Details (Optional)</label>
+                        <textarea 
+                            id="address" 
+                            name="address" 
+                            rows="2"
+                            placeholder="Enter any additional address details (e.g., apartment number, building name)"
+                            class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#45A247] focus:border-[#45A247] transition">{{ old('address', $bookingData['address'] ?? '') }}</textarea>
+                    </div>
                 </div>
-                @endif
 
                 <div class="flex justify-end">
                     <button 
@@ -84,121 +125,91 @@
     </div>
 </div>
 
-<!-- Google Places API (Optional - only loads if API key is configured) -->
-@if(env('GOOGLE_MAPS_API_KEY'))
-<script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places&callback=initAutocomplete" async defer></script>
-@endif
-
 <script>
-    let map;
-    let marker;
-    let autocomplete;
-    let geocoder;
-
-    // Handle manual address entry
-    function handleManualAddress() {
-        // Clear coordinates when user manually types
-        document.getElementById('latitude').value = '';
-        document.getElementById('longitude').value = '';
-        document.getElementById('place_id').value = '';
+    // Load cities when country is selected
+    function loadCities(countryId) {
+        const citySelect = document.getElementById('city_id');
+        const placeSelect = document.getElementById('place_id');
         
-        // Hide map if shown
-        const mapPreview = document.getElementById('map-preview');
-        if (mapPreview) {
-            mapPreview.classList.add('hidden');
+        // Reset cities and places
+        citySelect.innerHTML = '<option value="">-- Select City --</option>';
+        citySelect.disabled = !countryId;
+        
+        placeSelect.innerHTML = '<option value="">-- Select Service Area --</option>';
+        placeSelect.disabled = true;
+        
+        if (!countryId) {
+            return;
         }
-    }
-
-    // Initialize Google Places Autocomplete (only if API key is available)
-    @if(env('GOOGLE_MAPS_API_KEY'))
-    function initAutocomplete() {
-        const addressInput = document.getElementById('address');
         
-        // Initialize geocoder for manual addresses
-        geocoder = new google.maps.Geocoder();
-        
-        // Try to set up autocomplete (may not work if API key is invalid)
-        try {
-            autocomplete = new google.maps.places.Autocomplete(addressInput, {
-                types: ['address'],
-                fields: ['formatted_address', 'geometry', 'place_id']
-            });
-
-            autocomplete.addListener('place_changed', function() {
-                const place = autocomplete.getPlace();
-                
-                if (!place.geometry) {
-                    console.error('No geometry found for place');
-                    return;
-                }
-
-                // Set hidden fields
-                document.getElementById('latitude').value = place.geometry.location.lat();
-                document.getElementById('longitude').value = place.geometry.location.lng();
-                document.getElementById('place_id').value = place.place_id;
-
-                // Show and update map
-                showMap(place.geometry.location);
-            });
-        } catch (error) {
-            console.log('Google Places Autocomplete not available:', error);
-        }
-
-        // Also allow geocoding on blur (when user finishes typing manually)
-        addressInput.addEventListener('blur', function() {
-            const address = addressInput.value.trim();
-            if (address && geocoder) {
-                geocoder.geocode({ address: address }, function(results, status) {
-                    if (status === 'OK' && results[0]) {
-                        const location = results[0].geometry.location;
-                        document.getElementById('latitude').value = location.lat();
-                        document.getElementById('longitude').value = location.lng();
-                        document.getElementById('place_id').value = results[0].place_id;
-                        showMap(location);
-                    }
+        // Fetch cities via API
+        fetch(`/api/cities/${countryId}`)
+            .then(response => response.json())
+            .then(cities => {
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city.id;
+                    option.textContent = city.name;
+                    citySelect.appendChild(option);
                 });
-            }
-        });
+                citySelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error loading cities:', error);
+            });
     }
-
-    function showMap(location) {
-        const mapPreview = document.getElementById('map-preview');
-        if (!mapPreview) return;
+    
+    // Load places when city is selected
+    function loadPlaces(cityId) {
+        const placeSelect = document.getElementById('place_id');
         
-        mapPreview.classList.remove('hidden');
-
-        // Initialize map if not already done
-        if (!map) {
-            map = new google.maps.Map(document.getElementById('map'), {
-                center: location,
-                zoom: 15,
-                mapTypeControl: false,
-                streetViewControl: false,
-            });
-        } else {
-            map.setCenter(location);
+        // Reset places
+        placeSelect.innerHTML = '<option value="">-- Select Service Area --</option>';
+        placeSelect.disabled = !cityId;
+        
+        if (!cityId) {
+            return;
         }
-
-        // Add or update marker
-        if (marker) {
-            marker.setPosition(location);
-        } else {
-            marker = new google.maps.Marker({
-                map: map,
-                position: location,
-                animation: google.maps.Animation.DROP,
+        
+        // Fetch places via API
+        fetch(`/api/places/${cityId}`)
+            .then(response => response.json())
+            .then(places => {
+                places.forEach(place => {
+                    const option = document.createElement('option');
+                    option.value = place.id;
+                    let text = place.name;
+                    if (place.address) {
+                        text += ' - ' + place.address;
+                    }
+                    if (place.zip_code) {
+                        text += ' (' + place.zip_code + ')';
+                    }
+                    option.textContent = text;
+                    placeSelect.appendChild(option);
+                });
+                placeSelect.disabled = false;
+            })
+            .catch(error => {
+                console.error('Error loading places:', error);
             });
+    }
+    
+    // Initialize on page load if country/city is already selected
+    document.addEventListener('DOMContentLoaded', function() {
+        const countryId = document.getElementById('country_id').value;
+        const cityId = document.getElementById('city_id').value;
+        
+        if (countryId) {
+            loadCities(countryId);
+            if (cityId) {
+                // Wait a bit for cities to load, then load places
+                setTimeout(() => {
+                    loadPlaces(cityId);
+                }, 100);
+            }
         }
-    }
-
-    // Fallback if Google Maps API fails to load
-    window.initAutocomplete = initAutocomplete || function() {};
-    @else
-    // No Google Maps API - manual entry only
-    function handleManualAddress() {
-        // User can manually enter address without API
-    }
-    @endif
+    });
 </script>
 @endsection
 

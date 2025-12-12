@@ -121,8 +121,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             @php
                 $siteDescription = \App\Models\Setting::get('site_description', 'Mobile Steam Detailing - The Power of Clean, Unleashed.');
-                $contactEmail = \App\Models\Setting::get('contact_email', 'info@steamzila.com');
-                $contactPhone = \App\Models\Setting::get('contact_phone', '(555) 123-4567');
+                $contactEmail = \App\Models\Setting::get('contact_email', 'mrzilla89@thesteamzilla.com');
+                $contactPhone = \App\Models\Setting::get('contact_phone', '(413) 352-9444');
             @endphp
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div>

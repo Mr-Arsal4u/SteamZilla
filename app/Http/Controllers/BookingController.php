@@ -6,6 +6,9 @@ use App\Models\Booking;
 use App\Models\Package;
 use App\Models\Addon;
 use App\Models\GiftCard;
+use App\Models\Country;
+use App\Models\City;
+use App\Models\Place;
 use App\Mail\BookingConfirmation;
 use App\Mail\NewBookingNotification;
 use Illuminate\Http\Request;
@@ -26,16 +29,38 @@ class BookingController extends Controller
         }
 
         $bookingData = Session::get('booking_data', []);
-        return view('booking.step1', compact('bookingData'));
+        $countries = Country::where('is_active', true)->orderBy('sort_order')->orderBy('name')->get();
+        $cities = [];
+        $places = [];
+        
+        // If a country is selected, load its cities
+        if (isset($bookingData['country_id'])) {
+            $cities = City::where('country_id', $bookingData['country_id'])
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get();
+        }
+        
+        // If a city is selected, load its places
+        if (isset($bookingData['city_id'])) {
+            $places = Place::where('city_id', $bookingData['city_id'])
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get();
+        }
+        
+        return view('booking.step1', compact('bookingData', 'countries', 'cities', 'places'));
     }
 
     public function step1Store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'address' => 'required|string|max:500',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
-            'place_id' => 'nullable|string|max:255',
+            'country_id' => 'required|exists:countries,id',
+            'city_id' => 'required|exists:cities,id',
+            'place_id' => 'required|exists:places,id',
+            'address' => 'nullable|string|max:500',
         ]);
 
         if ($validator->fails()) {
@@ -44,15 +69,61 @@ class BookingController extends Controller
                 ->withInput();
         }
 
+        $place = Place::with(['city.country'])->findOrFail($request->place_id);
+        
         $bookingData = Session::get('booking_data', []);
-        $bookingData['address'] = trim($request->address);
-        // Latitude, longitude, and place_id are optional - user can enter address manually
-        $bookingData['latitude'] = $request->latitude ?: null;
-        $bookingData['longitude'] = $request->longitude ?: null;
-        $bookingData['place_id'] = $request->place_id ?: null;
+        $bookingData['country_id'] = $request->country_id;
+        $bookingData['city_id'] = $request->city_id;
+        $bookingData['place_id'] = $request->place_id;
+        
+        // Build address from place data
+        $addressParts = [];
+        if ($place->address) {
+            $addressParts[] = $place->address;
+        }
+        if ($place->name) {
+            $addressParts[] = $place->name;
+        }
+        if ($place->city) {
+            $addressParts[] = $place->city->name;
+        }
+        if ($place->city && $place->city->country) {
+            $addressParts[] = $place->city->country->name;
+        }
+        if ($place->zip_code) {
+            $addressParts[] = $place->zip_code;
+        }
+        
+        $bookingData['address'] = $request->address ?: implode(', ', $addressParts);
+        $bookingData['latitude'] = $place->latitude;
+        $bookingData['longitude'] = $place->longitude;
+        
         Session::put('booking_data', $bookingData);
 
         return redirect()->route('booking.step2');
+    }
+
+    // API endpoints for dynamic dropdowns
+    public function getCities($countryId)
+    {
+        $cities = City::where('country_id', $countryId)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name']);
+        
+        return response()->json($cities);
+    }
+
+    public function getPlaces($cityId)
+    {
+        $places = Place::where('city_id', $cityId)
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name', 'address', 'zip_code']);
+        
+        return response()->json($places);
     }
 
     // Step 2: Order Info (Vehicle + Services)
