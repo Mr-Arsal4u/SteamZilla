@@ -39,8 +39,16 @@ class GiftCardSeeder extends Seeder
             ],
         ];
 
-        foreach ($giftCards as $giftCard) {
-            GiftCard::create($giftCard);
+        foreach ($giftCards as $data) {
+            GiftCard::create([
+                'gift_card_number' => GiftCard::generateCardNumber(),
+                'pin' => GiftCard::generatePIN(),
+                'amount' => $data['amount'],
+                'original_purchase_amount' => $data['amount'],
+                'message' => $data['name'] . ' - ' . $data['description'],
+                'status' => $data['is_active'] ? 'active' : 'expired',
+                'delivery_method' => 'email', // Default required for consistent testing
+            ]);
         }
     }
 }

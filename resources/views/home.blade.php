@@ -5,7 +5,7 @@
 @section('content')
 @php
 use Illuminate\Support\Facades\Storage;
-$heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
+$heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'images/hero.png';
 @endphp
 <!-- SECTION 1: HERO SECTION -->
 <section class="relative h-[700px] md:h-[800px] flex items-center overflow-hidden">
@@ -14,7 +14,7 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
         <div class="absolute inset-0 bg-gradient-to-r from-black/85 via-black/75 to-black/65 z-10"></div>
         <div class="w-full h-full bg-cover bg-center" style="background-image: url('{{ $heroBgUrl }}');"></div>
     </div>
-    
+
     <!-- Hero Content -->
     <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         <div class="max-w-3xl bg-black/30 backdrop-blur-sm rounded-2xl p-8 md:p-12">
@@ -31,7 +31,7 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
                 {{ $heroDescription }}
             </p>
             @endif
-            <a href="{{ route('order-now') }}" 
+            <a href="{{ route('order-now') }}"
                class="inline-block bg-[#45A247] text-white px-10 py-5 rounded-full text-lg md:text-xl font-bold hover:bg-[#3a8a3c] transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl uppercase tracking-wide">
                 SUMMON STEAMZILLA FOR A QUOTE
             </a>
@@ -58,7 +58,7 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
                 <h3 class="text-2xl font-bold text-gray-900 mb-4">Chemical-Free Crusader</h3>
                 <p class="text-gray-600 leading-relaxed">Our primary weapon is pure, pressurized steam. We drastically reduce chemical use, making your car safe for kids, pets, and the planet.</p>
             </div>
-            
+
             <!-- Benefit Card 2 -->
             <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-gray-100">
                 <div class="w-20 h-20 bg-[#45A247]/10 rounded-full flex items-center justify-center mb-6">
@@ -67,7 +67,7 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
                 <h3 class="text-2xl font-bold text-gray-900 mb-4">Sanitization Onslaught</h3>
                 <p class="text-gray-600 leading-relaxed">SteamZilla's heat eliminates 99.9% of bacteria, viruses, and allergens. We don't just clean your interior; we sanitize it.</p>
             </div>
-            
+
             <!-- Benefit Card 3 -->
             <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-gray-100">
                 <div class="w-20 h-20 bg-[#45A247]/10 rounded-full flex items-center justify-center mb-6">
@@ -76,7 +76,7 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
                 <h3 class="text-2xl font-bold text-gray-900 mb-4">Deep-Pore Destruction</h3>
                 <p class="text-gray-600 leading-relaxed">Traditional methods smear dirt. Our steam penetrates and lifts contaminants from fabrics, leather, and crevices, which we then completely extract.</p>
             </div>
-            
+
             <!-- Benefit Card 4 -->
             <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-gray-100">
                 <div class="w-20 h-20 bg-[#45A247]/10 rounded-full flex items-center justify-center mb-6">
@@ -100,7 +100,7 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
             <p class="text-center text-gray-600 mb-12 text-lg max-w-3xl mx-auto">{{ $howItWorksDescription }}</p>
         @endif
         <div class="mb-16"></div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             <!-- Step 1 -->
             <div class="text-center">
@@ -111,7 +111,7 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
                 <h3 class="text-xl font-bold mb-3 text-gray-900">Book Your Service</h3>
                 <p class="text-gray-600">Choose preferred date and time.</p>
             </div>
-            
+
             <!-- Step 2 -->
             <div class="text-center">
                 <div class="w-20 h-20 bg-[#45A247] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -121,7 +121,7 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
                 <h3 class="text-xl font-bold mb-3 text-gray-900">We Come to You</h3>
                 <p class="text-gray-600">Our team arrives with advanced steam equipment.</p>
             </div>
-            
+
             <!-- Step 3 -->
             <div class="text-center">
                 <div class="w-20 h-20 bg-[#45A247] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -131,7 +131,7 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
                 <h3 class="text-xl font-bold mb-3 text-gray-900">Professional Cleaning</h3>
                 <p class="text-gray-600">We provide a complete exterior and interior steam treatment.</p>
             </div>
-            
+
             <!-- Step 4 -->
             <div class="text-center">
                 <div class="w-20 h-20 bg-[#45A247] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -149,7 +149,7 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 class="text-3xl md:text-4xl font-bold text-center mb-4 text-gray-900">Signature Service Packages</h2>
         <p class="text-center text-gray-600 mb-12 text-lg">DEPLOY THE BEAST. CHOOSE YOUR MISSION.</p>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @foreach($packages as $package)
             <div class="bg-white border-2 border-gray-200 rounded-2xl p-8 hover:border-[#45A247] hover:shadow-xl transition-all duration-300">
@@ -177,14 +177,14 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
                         </ul>
                     @endif
                 @endif
-                <a href="{{ route('order-now', ['package_id' => $package->id]) }}" 
+                <a href="{{ route('order-now', ['package_id' => $package->id]) }}"
                    class="block w-full bg-[#45A247] text-white text-center py-3 rounded-full hover:bg-[#3a8a3c] transition font-semibold shadow-md hover:shadow-lg uppercase tracking-wide">
                     Select
                 </a>
             </div>
             @endforeach
         </div>
-        
+
         <div class="text-center mt-12">
             <a href="{{ route('pricing') }}" class="text-[#45A247] hover:underline font-semibold text-lg">
                 View All Packages →
@@ -198,7 +198,7 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 class="text-3xl md:text-4xl font-bold text-center mb-4 text-gray-900">À La Carte Add-Ons</h2>
         <p class="text-center text-gray-600 mb-4 text-lg italic">The Zilla's Toolkit</p>
-        
+
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             @foreach($addons as $addon)
             <div class="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
@@ -216,7 +216,7 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
             </div>
             @endforeach
         </div>
-        
+
         <div class="text-center mt-12">
             <a href="{{ route('pricing') }}" class="text-[#45A247] hover:underline font-semibold text-lg">
                 View All Add-Ons →
@@ -231,12 +231,12 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 class="text-3xl md:text-4xl font-bold text-center mb-4 text-gray-900">Our Work Gallery</h2>
         <p class="text-center text-gray-600 mb-12 text-lg">See the results of our professional steam cleaning services</p>
-        
+
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             @foreach($galleryImages as $image)
             <div class="relative group overflow-hidden rounded-xl cursor-pointer">
-                <img src="{{ Storage::url($image->image_path) }}" 
-                     alt="{{ $image->title ?: 'Gallery image' }}" 
+                <img src="{{ Storage::url($image->image_path) }}"
+                     alt="{{ $image->title ?: 'Gallery image' }}"
                      class="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110">
                 <div class="absolute inset-0 bg-[#45A247]/0 group-hover:bg-[#45A247]/20 transition-all duration-300"></div>
                 @if($image->title)
@@ -256,9 +256,9 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
     <!-- Background Image with Overlay -->
     <div class="absolute inset-0 z-0">
         <div class="absolute inset-0 bg-gradient-to-r from-gray-900/80 via-gray-900/70 to-gray-900/60 z-10"></div>
-        <div class="w-full h-full bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1552519507-da3b142c6e3d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80');"></div>
+        <div class="w-full h-full bg-cover bg-center" style="background-image: url('images/interior.png');"></div>
     </div>
-    
+
     <!-- Content -->
     <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
@@ -282,15 +282,15 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
                         <span class="text-white text-lg">Eco-safe for kids & pets</span>
                     </li>
                 </ul>
-                <a href="{{ route('order-now') }}" 
+                <a href="{{ route('order-now') }}"
                    class="inline-block mt-8 bg-[#45A247] text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-[#3a8a3c] transform hover:scale-105 transition-all duration-300 shadow-lg">
                     Get Started
                 </a>
             </div>
             <div class="hidden lg:block">
                 <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8">
-                    <img src="https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" 
-                         alt="Steam Cleaning" 
+                    <img src="{{ asset('images/exterior.png') }}"
+                         alt="Steam Cleaning"
                          class="rounded-xl shadow-2xl">
                 </div>
             </div>
@@ -309,7 +309,7 @@ $heroBgUrl = $heroBackground ? asset('storage/' . $heroBackground) : 'https://im
             transform: translateY(0);
         }
     }
-    
+
     .animate-fade-in {
         animation: fade-in 1s ease-out;
     }

@@ -78,9 +78,9 @@ return new class extends Migration
             'original_purchase_amount' => DB::raw('amount'),
         ]);
         
-        // Update status based on is_active
+        // Update status where it is null, default to active since is_active column does not exist
         DB::table('gift_cards')->whereNull('status')->update([
-            'status' => DB::raw('CASE WHEN is_active = 1 THEN "active" ELSE "expired" END'),
+            'status' => 'active',
         ]);
 
         // Add unique index manually using raw SQL to avoid issues
