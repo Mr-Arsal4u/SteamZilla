@@ -5,7 +5,7 @@
 
 @section('content')
 <!-- Payment Stats -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+<div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
     <div class="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
         <p class="text-gray-600 text-sm font-medium">Total Revenue</p>
         <p class="text-3xl font-bold text-gray-900 mt-2">${{ number_format($paymentStats['total_revenue'], 2) }}</p>
@@ -13,6 +13,10 @@
     <div class="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
         <p class="text-gray-600 text-sm font-medium">Card Payments</p>
         <p class="text-3xl font-bold text-gray-900 mt-2">${{ number_format($paymentStats['card_payments'], 2) }}</p>
+    </div>
+    <div class="bg-white rounded-lg shadow p-6 border-l-4 border-[#45A247]">
+        <p class="text-gray-600 text-sm font-medium">Square Payments</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">${{ number_format($paymentStats['square_payments'] ?? 0, 2) }}</p>
     </div>
     <div class="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
         <p class="text-gray-600 text-sm font-medium">Gift Card Payments</p>
@@ -32,7 +36,9 @@
             <select name="payment_method" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#45A247] focus:border-[#45A247]">
                 <option value="">All Methods</option>
                 <option value="card" {{ request('payment_method') == 'card' ? 'selected' : '' }}>Card</option>
+                <option value="square" {{ request('payment_method') == 'square' ? 'selected' : '' }}>Square</option>
                 <option value="gift_card" {{ request('payment_method') == 'gift_card' ? 'selected' : '' }}>Gift Card</option>
+                <option value="cash" {{ request('payment_method') == 'cash' ? 'selected' : '' }}>Cash</option>
             </select>
         </div>
         <div>
@@ -81,7 +87,10 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">${{ number_format($payment->total_price, 2) }}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                            {{ $payment->payment_method === 'card' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
+                            {{ $payment->payment_method === 'card' ? 'bg-blue-100 text-blue-800' : '' }}
+                            {{ $payment->payment_method === 'square' ? 'bg-green-100 text-green-800' : '' }}
+                            {{ $payment->payment_method === 'gift_card' ? 'bg-purple-100 text-purple-800' : '' }}
+                            {{ $payment->payment_method === 'cash' ? 'bg-gray-100 text-gray-800' : '' }}">
                             {{ ucfirst(str_replace('_', ' ', $payment->payment_method)) }}
                         </span>
                     </td>
