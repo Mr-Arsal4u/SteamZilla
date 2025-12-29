@@ -9,6 +9,8 @@ use App\Models\GiftCard;
 use App\Models\Country;
 use App\Models\City;
 use App\Models\Place;
+use App\Models\VehicleType;
+use App\Models\TimeSlot;
 use App\Mail\BookingConfirmation;
 use App\Mail\NewBookingNotification;
 use Illuminate\Http\Request;
@@ -138,14 +140,18 @@ class BookingController extends Controller
 
         $packages = Package::where('is_active', true)->get();
         $addons = Addon::where('is_active', true)->get();
+        $vehicleTypes = VehicleType::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
         
-        return view('booking.step2', compact('packages', 'addons', 'bookingData'));
+        return view('booking.step2', compact('packages', 'addons', 'vehicleTypes', 'bookingData'));
     }
 
     public function step2Store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'vehicle_type' => 'required|string|max:255',
+            'vehicle_type_id' => 'required|exists:vehicle_types,id',
             'package_id' => 'required|exists:packages,id',
             'addons' => 'nullable|array',
             'addons.*' => 'exists:addons,id',
@@ -179,8 +185,11 @@ class BookingController extends Controller
             }
         }
 
+        $vehicleType = VehicleType::findOrFail($request->vehicle_type_id);
+        
         $bookingData = Session::get('booking_data', []);
-        $bookingData['vehicle_type'] = $request->vehicle_type;
+        $bookingData['vehicle_type_id'] = $request->vehicle_type_id;
+        $bookingData['vehicle_type'] = $vehicleType->name;
         $bookingData['package_id'] = $request->package_id;
         $bookingData['package_name'] = $package->name;
         $bookingData['package_price'] = $package->price;
@@ -201,14 +210,18 @@ class BookingController extends Controller
                 ->with('error', 'Please select a service package first.');
         }
 
-        // Generate available time slots (8 AM to 6 PM, hourly)
-        $timeSlots = [];
-        for ($hour = 8; $hour <= 18; $hour++) {
-            $timeSlots[] = [
-                'value' => str_pad($hour, 2, '0', STR_PAD_LEFT) . ':00',
-                'label' => date('g:i A', mktime($hour, 0, 0)),
-            ];
-        }
+        // Get available time slots from database
+        $timeSlots = TimeSlot::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('start_time')
+            ->get()
+            ->map(function ($slot) {
+                return [
+                    'value' => $slot->time_value,
+                    'label' => $slot->formatted_time,
+                ];
+            })
+            ->toArray();
 
         return view('booking.step3', compact('timeSlots', 'bookingData'));
     }
@@ -254,6 +267,7 @@ class BookingController extends Controller
             'user_email' => 'required|email|max:255',
             'user_phone' => 'required|string|max:20',
             'notes' => 'nullable|string',
+            'payment_method' => 'required|in:square,cash',
         ]);
 
         if ($validator->fails()) {
@@ -264,7 +278,20 @@ class BookingController extends Controller
 
         $bookingData = Session::get('booking_data', []);
         
-        // Create booking
+        // Store user info in session for payment processing
+        $bookingData['user_name'] = $request->user_name;
+        $bookingData['user_email'] = $request->user_email;
+        $bookingData['user_phone'] = $request->user_phone;
+        $bookingData['notes'] = $request->notes;
+        $bookingData['payment_method'] = $request->payment_method;
+        Session::put('booking_data', $bookingData);
+
+        // If Square payment, redirect to payment page
+        if ($request->payment_method === 'square') {
+            return redirect()->route('booking.payment');
+        }
+
+        // Otherwise, create booking with cash payment (collected on service day)
         $booking = Booking::create([
             'user_name' => $request->user_name,
             'user_email' => $request->user_email,
@@ -280,9 +307,10 @@ class BookingController extends Controller
             'status' => 'pending',
             'notes' => $request->notes,
             'total_price' => $bookingData['total_price'],
-            'payment_method' => null, // Payment will be collected by employee
+            'payment_method' => 'cash',
             'gift_card_id' => null,
             'gift_card_discount' => 0,
+            'payment_status' => 'pending',
         ]);
 
         // Attach addons

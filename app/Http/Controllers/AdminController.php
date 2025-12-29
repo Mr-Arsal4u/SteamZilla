@@ -14,6 +14,8 @@ use App\Models\ContactSubmission;
 use App\Models\Country;
 use App\Models\City;
 use App\Models\Place;
+use App\Models\VehicleType;
+use App\Models\TimeSlot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -754,5 +756,149 @@ class AdminController extends Controller
         $place = Place::findOrFail($id);
         $place->delete();
         return redirect()->route('admin.places')->with('success', 'Place deleted successfully.');
+    }
+
+    // ==================== VEHICLE TYPES MANAGEMENT ====================
+    public function vehicleTypes()
+    {
+        $vehicleTypes = VehicleType::orderBy('sort_order')->orderBy('name')->get();
+        return view('admin.vehicle-types.index', compact('vehicleTypes'));
+    }
+
+    public function createVehicleType()
+    {
+        return view('admin.vehicle-types.create');
+    }
+
+    public function storeVehicleType(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        VehicleType::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'sort_order' => $request->sort_order ?? 0,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->route('admin.vehicle-types')->with('success', 'Vehicle type created successfully.');
+    }
+
+    public function editVehicleType($id)
+    {
+        $vehicleType = VehicleType::findOrFail($id);
+        return view('admin.vehicle-types.edit', compact('vehicleType'));
+    }
+
+    public function updateVehicleType(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $vehicleType = VehicleType::findOrFail($id);
+        $vehicleType->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'sort_order' => $request->sort_order ?? 0,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->route('admin.vehicle-types')->with('success', 'Vehicle type updated successfully.');
+    }
+
+    public function deleteVehicleType($id)
+    {
+        $vehicleType = VehicleType::findOrFail($id);
+        $vehicleType->delete();
+        return redirect()->route('admin.vehicle-types')->with('success', 'Vehicle type deleted successfully.');
+    }
+
+    // ==================== TIME SLOTS MANAGEMENT ====================
+    public function timeSlots()
+    {
+        $timeSlots = TimeSlot::orderBy('sort_order')->orderBy('start_time')->get();
+        return view('admin.time-slots.index', compact('timeSlots'));
+    }
+
+    public function createTimeSlot()
+    {
+        return view('admin.time-slots.create');
+    }
+
+    public function storeTimeSlot(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after:start_time',
+            'label' => 'nullable|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        TimeSlot::create([
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'label' => $request->label,
+            'sort_order' => $request->sort_order ?? 0,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->route('admin.time-slots')->with('success', 'Time slot created successfully.');
+    }
+
+    public function editTimeSlot($id)
+    {
+        $timeSlot = TimeSlot::findOrFail($id);
+        return view('admin.time-slots.edit', compact('timeSlot'));
+    }
+
+    public function updateTimeSlot(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'nullable|date_format:H:i|after:start_time',
+            'label' => 'nullable|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $timeSlot = TimeSlot::findOrFail($id);
+        $timeSlot->update([
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'label' => $request->label,
+            'sort_order' => $request->sort_order ?? 0,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->route('admin.time-slots')->with('success', 'Time slot updated successfully.');
+    }
+
+    public function deleteTimeSlot($id)
+    {
+        $timeSlot = TimeSlot::findOrFail($id);
+        $timeSlot->delete();
+        return redirect()->route('admin.time-slots')->with('success', 'Time slot deleted successfully.');
     }
 }

@@ -76,18 +76,54 @@
                             </div>
                         </div>
 
-                        <!-- Payment Notice -->
-                        <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-8">
-                            <div class="flex items-start">
-                                <i class="fas fa-info-circle text-blue-600 text-2xl mr-4 mt-1"></i>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Payment Information</h3>
-                                    <p class="text-gray-700 leading-relaxed">
-                                        <strong>Our employee will contact you for the payment</strong> after confirming your booking. You can pay via cash, card, or other accepted payment methods when our team arrives for the service.
-                                    </p>
-                                </div>
+                        <!-- Payment Method Selection -->
+                        <div class="mb-8">
+                            <label class="block text-sm font-medium text-gray-700 mb-4">Payment Method *</label>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition {{ old('payment_method') === 'square' ? 'border-[#45A247] bg-green-50' : 'border-gray-300' }}">
+                                    <input type="radio" name="payment_method" value="square" {{ old('payment_method') === 'square' ? 'checked' : '' }} required class="sr-only">
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-lg font-semibold text-gray-900">Pay Now (Square)</span>
+                                            <i class="fas fa-credit-card text-[#45A247] text-xl"></i>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mt-1">Secure online payment via Square</p>
+                                    </div>
+                                    <div class="ml-4">
+                                        <i class="fas fa-check-circle text-[#45A247] text-xl {{ old('payment_method') === 'square' ? '' : 'hidden' }}"></i>
+                                    </div>
+                                </label>
+                                <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition {{ old('payment_method') === 'cash' ? 'border-[#45A247] bg-green-50' : 'border-gray-300' }}">
+                                    <input type="radio" name="payment_method" value="cash" {{ old('payment_method') === 'cash' || old('payment_method') === null ? 'checked' : '' }} required class="sr-only">
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-lg font-semibold text-gray-900">Pay on Service</span>
+                                            <i class="fas fa-money-bill-wave text-gray-600 text-xl"></i>
+                                        </div>
+                                        <p class="text-sm text-gray-600 mt-1">Pay when our team arrives</p>
+                                    </div>
+                                    <div class="ml-4">
+                                        <i class="fas fa-check-circle text-[#45A247] text-xl {{ old('payment_method') === 'cash' || old('payment_method') === null ? '' : 'hidden' }}"></i>
+                                    </div>
+                                </label>
                             </div>
                         </div>
+
+                        <script>
+                            document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+                                radio.addEventListener('change', function() {
+                                    document.querySelectorAll('label').forEach(label => {
+                                        if (label.querySelector('input[type="radio"]').checked) {
+                                            label.classList.add('border-[#45A247]', 'bg-green-50');
+                                            label.querySelector('.fa-check-circle').classList.remove('hidden');
+                                        } else {
+                                            label.classList.remove('border-[#45A247]', 'bg-green-50');
+                                            label.querySelector('.fa-check-circle').classList.add('hidden');
+                                        }
+                                    });
+                                });
+                            });
+                        </script>
 
                         <!-- Additional Notes -->
                         <div class="mb-8">
