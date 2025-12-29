@@ -6,41 +6,41 @@
 <div class="min-h-screen bg-white py-12">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Progress Indicator -->
-        <div class="mb-8">
-            <div class="flex items-center justify-center space-x-4">
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold">
-                        <i class="fas fa-check text-sm"></i>
+        <div class="mb-6 sm:mb-8">
+            <div class="flex items-center justify-center space-x-2 sm:space-x-4 overflow-x-auto pb-2">
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold text-xs sm:text-sm">
+                        <i class="fas fa-check text-xs sm:text-sm"></i>
                     </div>
-                    <span class="ml-2 text-sm font-semibold text-[#45A247]">Address</span>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-[#45A247] hidden sm:inline">Address</span>
                 </div>
-                <div class="w-16 h-1 bg-[#45A247]"></div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold">
-                        <i class="fas fa-check text-sm"></i>
+                <div class="w-8 sm:w-16 h-1 bg-[#45A247] flex-shrink-0"></div>
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold text-xs sm:text-sm">
+                        <i class="fas fa-check text-xs sm:text-sm"></i>
                     </div>
-                    <span class="ml-2 text-sm font-semibold text-[#45A247]">Order Info</span>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-[#45A247] hidden sm:inline">Order Info</span>
                 </div>
-                <div class="w-16 h-1 bg-[#45A247]"></div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold">
-                        <i class="fas fa-check text-sm"></i>
+                <div class="w-8 sm:w-16 h-1 bg-[#45A247] flex-shrink-0"></div>
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold text-xs sm:text-sm">
+                        <i class="fas fa-check text-xs sm:text-sm"></i>
                     </div>
-                    <span class="ml-2 text-sm font-semibold text-[#45A247]">Date/Time</span>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-[#45A247] hidden sm:inline">Date/Time</span>
                 </div>
-                <div class="w-16 h-1 bg-[#45A247]"></div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold">4</div>
-                    <span class="ml-2 text-sm font-semibold text-[#45A247]">Confirm</span>
+                <div class="w-8 sm:w-16 h-1 bg-[#45A247] flex-shrink-0"></div>
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold text-xs sm:text-sm">4</div>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-[#45A247] hidden sm:inline">Confirm</span>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             <!-- Contact Information Form -->
             <div class="lg:col-span-2">
-                <div class="bg-white rounded-lg shadow-lg p-8 md:p-12">
-                    <h2 class="text-3xl font-bold text-gray-900 mb-8">Contact Information</h2>
+                <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8 lg:p-12">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Contact Information</h2>
 
                     @if($errors->any())
                         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
