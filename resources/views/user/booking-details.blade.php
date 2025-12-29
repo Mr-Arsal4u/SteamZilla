@@ -5,13 +5,13 @@
 
 @section('content')
 <div class="bg-white rounded-lg shadow overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-        <div class="flex items-center justify-between">
+    <div class="px-4 sm:px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-                <h3 class="text-lg font-semibold text-gray-900">Booking #{{ $booking->id }}</h3>
-                <p class="text-sm text-gray-600 mt-1">Created on {{ $booking->created_at->format('F d, Y \a\t h:i A') }}</p>
+                <h3 class="text-base sm:text-lg font-semibold text-gray-900">Booking #{{ $booking->id }}</h3>
+                <p class="text-xs sm:text-sm text-gray-600 mt-1">Created on {{ $booking->created_at->format('F d, Y \a\t h:i A') }}</p>
             </div>
-            <span class="px-4 py-2 text-sm font-semibold rounded-full
+            <span class="px-3 sm:px-4 py-1 sm:py-2 text-xs sm:text-sm font-semibold rounded-full
                 {{ $booking->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : '' }}
                 {{ $booking->status === 'confirmed' ? 'bg-blue-100 text-blue-800' : '' }}
                 {{ $booking->status === 'completed' ? 'bg-green-100 text-green-800' : '' }}
@@ -21,8 +21,8 @@
         </div>
     </div>
 
-    <div class="p-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <div class="p-4 sm:p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
             <!-- Service Package -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Service Package</label>
@@ -121,8 +121,8 @@
         </div>
     </div>
 
-    <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
-        <a href="{{ route('user.bookings') }}" class="text-[#45A247] hover:underline">
+    <div class="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <a href="{{ route('user.bookings') }}" class="text-[#45A247] hover:underline text-sm sm:text-base">
             <i class="fas fa-arrow-left mr-2"></i> Back to Bookings
         </a>
     </div>
