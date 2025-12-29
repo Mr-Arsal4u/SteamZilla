@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 
 class GiftCardController extends Controller
@@ -46,13 +47,12 @@ class GiftCardController extends Controller
         // Calculate discount
         $pricing = GiftCard::calculateDiscount($request->amount);
 
-        // Generate gift card
-        $giftCard = GiftCard::create([
-            'gift_card_number' => GiftCard::generateCardNumber(),
-            'pin' => GiftCard::generatePIN(),
+        // Store gift card data in session for payment processing
+        $giftCardData = [
             'amount' => $request->amount,
             'original_purchase_amount' => $request->amount,
             'discount_applied' => $pricing['discount'],
+            'final_paid_amount' => $pricing['final'],
             'sender_name' => $request->sender_name,
             'sender_email' => $request->sender_email,
             'recipient_name' => $request->send_to_myself ? $request->sender_name : $request->recipient_name,
@@ -61,33 +61,12 @@ class GiftCardController extends Controller
             'delivery_method' => $request->delivery_method,
             'delivery_datetime' => $request->delivery_date . ' ' . $request->delivery_time,
             'message' => $request->message,
-            'status' => 'active',
-            'expires_at' => now()->addYears(2),
-        ]);
+        ];
 
-        // Create transaction
-        GiftCardTransaction::create([
-            'gift_card_id' => $giftCard->id,
-            'type' => 'purchase',
-            'amount' => $request->amount,
-            'discount_amount' => $pricing['discount'],
-            'final_paid_amount' => $pricing['final'],
-        ]);
+        session(['gift_card_data' => $giftCardData]);
 
-        // Send delivery email
-        try {
-            if ($giftCard->delivery_method === 'email' && $giftCard->recipient_email) {
-                Mail::to($giftCard->recipient_email)->send(new GiftCardDelivery($giftCard));
-            } elseif ($giftCard->delivery_method === 'self' && $giftCard->sender_email) {
-                Mail::to($giftCard->sender_email)->send(new GiftCardDelivery($giftCard));
-            }
-        } catch (\Exception $e) {
-            // Log error but don't fail the transaction
-            Log::error('Failed to send gift card email: ' . $e->getMessage());
-        }
-
-        return redirect()->route('gift-cards.success', $giftCard->id)
-            ->with('success', 'Gift card purchased successfully!');
+        // Redirect to payment page
+        return redirect()->route('gift-cards.payment');
     }
 
     public function checkBalance(Request $request)
@@ -205,6 +184,22 @@ class GiftCardController extends Controller
 
         return redirect()->route('gift-cards.success', $giftCard->id)
             ->with('success', 'Gift card reloaded successfully!');
+    }
+
+    public function showPaymentPage(Request $request)
+    {
+        $giftCardData = session('gift_card_data');
+
+        if (empty($giftCardData)) {
+            return redirect()->route('gift-cards', ['tab' => 'buy'])
+                ->with('error', 'Please complete the gift card form first.');
+        }
+
+        return view('gift-cards.payment', [
+            'applicationId' => config('services.square.application_id'),
+            'locationId' => config('services.square.location_id'),
+            'giftCardData' => $giftCardData,
+        ]);
     }
 
     public function success($id)

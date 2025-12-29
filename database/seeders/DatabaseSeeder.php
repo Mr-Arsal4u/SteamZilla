@@ -19,11 +19,13 @@ class DatabaseSeeder extends Seeder
         // Seed admin user
         $this->call(AdminUserSeeder::class);
 
-        // Seed packages, addons, and gift cards
+        // Seed packages, addons, gift cards, vehicle types, and time slots
         $this->call([
             PackageSeeder::class,
             AddonSeeder::class,
             GiftCardSeeder::class,
+            VehicleTypeSeeder::class,
+            TimeSlotSeeder::class,
         ]);
     }
 }

@@ -1,0 +1,597 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Square\Environments;
+use Square\SquareClient;
+use Square\Payments\Requests\CreatePaymentRequest;
+use Square\Payments\Requests\GetPaymentsRequest;
+use Square\Refunds\Requests\RefundPaymentRequest;
+use Square\Types\Money;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Session;
+use Square\Exceptions\SquareApiException;
+use App\Models\Booking;
+use App\Models\GiftCard;
+use App\Mail\BookingConfirmation;
+use App\Mail\NewBookingNotification;
+
+class PaymentController extends Controller
+{
+    private $squareClient;
+
+    public function __construct()
+    {
+        // Initialize Square client
+        $environment = config('services.square.environment') === 'production'
+            ? Environments::Production
+            : Environments::Sandbox;
+        
+        $this->squareClient = new SquareClient(
+            config('services.square.access_token'),
+            null, // version (uses default)
+            [
+                'baseUrl' => $environment->value,
+            ]
+        );
+    }
+
+    /**
+     * Show payment page for booking
+     */
+    public function showPaymentPage(Request $request)
+    {
+        // Get booking details from session
+        $bookingData = Session::get('booking_data');
+
+        if (empty($bookingData)) {
+            return redirect()->route('booking.step1')
+                ->with('error', 'Please complete the booking steps first.');
+        }
+
+        $applicationId = config('services.square.application_id');
+        $locationId = config('services.square.location_id');
+
+        // If location ID is not set, try to fetch it from Square API
+        if (empty($locationId)) {
+            try {
+                $locationsResponse = $this->squareClient->locations->list();
+                $errors = $locationsResponse->getErrors();
+                
+                if (empty($errors)) {
+                    $locations = $locationsResponse->getLocations();
+                    if (!empty($locations) && isset($locations[0])) {
+                        $locationId = $locations[0]->getId();
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to fetch Square locations: ' . $e->getMessage());
+            }
+        }
+
+        if (empty($locationId)) {
+            return redirect()->route('booking.step4')
+                ->with('error', 'Square location ID is not configured. Please set SQUARE_LOCATION_ID in your .env file.');
+        }
+
+        return view('booking.payment', [
+            'applicationId' => $applicationId,
+            'locationId' => $locationId,
+            'bookingData' => $bookingData,
+        ]);
+    }
+
+    /**
+     * Process payment from Square payment form for booking
+     */
+    public function processPayment(Request $request)
+    {
+        try {
+            $bookingData = Session::get('booking_data');
+            
+            if (empty($bookingData)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Booking data not found. Please start over.',
+                ], 400);
+            }
+
+            // Validate required booking data is present
+            $requiredFields = ['address', 'vehicle_type', 'booking_date', 'booking_time', 'package_id', 'total_price'];
+            foreach ($requiredFields as $field) {
+                if (!isset($bookingData[$field]) || empty($bookingData[$field])) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Incomplete booking information. Please start over.',
+                    ], 400);
+                }
+            }
+
+            // Validate incoming request
+            $validated = $request->validate([
+                'sourceId' => 'required|string', // Token from Square's card form
+                'user_name' => 'required|string|max:255',
+                'user_email' => 'required|email|max:255',
+                'user_phone' => 'required|string|max:20',
+                'notes' => 'nullable|string',
+            ]);
+
+            // Validate and convert amount to cents (Square uses smallest currency unit)
+            $totalPrice = (float)($bookingData['total_price'] ?? 0);
+            
+            if ($totalPrice <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid booking amount. Please start over.',
+                ], 400);
+            }
+            
+            $amountInCents = (int)round($totalPrice * 100);
+
+            // Get location ID (fetch if not set)
+            $locationId = config('services.square.location_id');
+            if (empty($locationId)) {
+                try {
+                    $locationsResponse = $this->squareClient->locations->list();
+                    $errors = $locationsResponse->getErrors();
+                    
+                    if (empty($errors)) {
+                        $locations = $locationsResponse->getLocations();
+                        if (!empty($locations) && isset($locations[0])) {
+                            $locationId = $locations[0]->getId();
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to fetch Square locations in processPayment: ' . $e->getMessage());
+                }
+            }
+
+            if (empty($locationId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Square location ID is not configured. Please contact support.',
+                ], 400);
+            }
+
+            // Create payment request
+            $paymentsApi = $this->squareClient->payments;
+
+            $amountMoney = new Money([
+                'amount' => $amountInCents,
+                'currency' => 'USD',
+            ]);
+
+            $body = new CreatePaymentRequest([
+                'sourceId' => $validated['sourceId'],
+                'idempotencyKey' => uniqid(),
+                'amountMoney' => $amountMoney,
+                'locationId' => $locationId,
+                'note' => 'Car detailing service booking',
+                'buyerEmailAddress' => $validated['user_email'],
+            ]);
+
+            $paymentResponse = $paymentsApi->create($body);
+
+            $errors = $paymentResponse->getErrors();
+            if (!empty($errors)) {
+                $errorMessage = $errors[0]->getDetail() ?? 'Payment failed';
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage,
+                ], 400);
+            }
+
+            $payment = $paymentResponse->getPayment();
+
+            if (!$payment || !$payment->getId()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Payment was processed but no payment ID was returned. Please contact support.',
+                ], 500);
+            }
+
+            // Save booking to database
+            $booking = $this->saveBooking($bookingData, $validated, $payment);
+
+            // Send confirmation emails
+            try {
+                Mail::to($booking->user_email)->send(new BookingConfirmation($booking));
+                if (config('mail.admin_email')) {
+                    Mail::to(config('mail.admin_email'))->send(new NewBookingNotification($booking));
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send booking emails: ' . $e->getMessage());
+            }
+
+            // Clear session
+            Session::forget('booking_data');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment successful!',
+                'booking_id' => $booking->id,
+                'transaction_id' => $payment->getId(),
+                'redirect_url' => route('booking.success', $booking->id),
+            ]);
+
+        } catch (SquareApiException $e) {
+            Log::error('Square API Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment failed: ' . $e->getMessage(),
+            ], 400);
+
+        } catch (\Exception $e) {
+            Log::error('Payment Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Save booking to database
+     */
+    private function saveBooking($bookingData, $validated, $payment)
+    {
+        $booking = Booking::create([
+            'user_name' => $validated['user_name'],
+            'user_email' => $validated['user_email'],
+            'user_phone' => $validated['user_phone'],
+            'address' => $bookingData['address'],
+            'latitude' => $bookingData['latitude'] ?? null,
+            'longitude' => $bookingData['longitude'] ?? null,
+            'place_id' => $bookingData['place_id'] ?? null,
+            'vehicle_type' => $bookingData['vehicle_type'],
+            'booking_date' => $bookingData['booking_date'],
+            'booking_time' => $bookingData['booking_time'],
+            'package_id' => $bookingData['package_id'],
+            'status' => 'confirmed',
+            'notes' => $validated['notes'] ?? null,
+            'total_price' => $bookingData['total_price'],
+            'payment_method' => 'square',
+            'gift_card_id' => null,
+            'gift_card_discount' => 0,
+            'square_payment_id' => $payment->getId(),
+            'square_receipt_url' => $payment->getReceiptUrl() ?? null,
+            'payment_status' => 'paid',
+        ]);
+
+        // Attach addons
+        if (!empty($bookingData['addons'])) {
+            foreach ($bookingData['addons'] as $addonData) {
+                $booking->bookingAddons()->create([
+                    'addon_id' => $addonData['id'],
+                    'quantity' => $addonData['quantity'],
+                    'price_at_booking' => $addonData['price'],
+                ]);
+            }
+        }
+
+        return $booking;
+    }
+
+    /**
+     * Process gift card payment
+     */
+    public function processGiftCardPayment(Request $request)
+    {
+        try {
+            $giftCardData = Session::get('gift_card_data');
+            
+            if (empty($giftCardData)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gift card data not found. Please start over.',
+                ], 400);
+            }
+
+            // Validate incoming request
+            $validated = $request->validate([
+                'sourceId' => 'required|string',
+            ]);
+
+            // Calculate discount
+            $pricing = GiftCard::calculateDiscount($giftCardData['amount']);
+            $amountInCents = (int)($pricing['final'] * 100);
+
+            // Get location ID (fetch if not set)
+            $locationId = config('services.square.location_id');
+            if (empty($locationId)) {
+                try {
+                    $locationsResponse = $this->squareClient->locations->list();
+                    $errors = $locationsResponse->getErrors();
+                    
+                    if (empty($errors)) {
+                        $locations = $locationsResponse->getLocations();
+                        if (!empty($locations) && isset($locations[0])) {
+                            $locationId = $locations[0]->getId();
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Failed to fetch Square locations in processGiftCardPayment: ' . $e->getMessage());
+                }
+            }
+
+            if (empty($locationId)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Square location ID is not configured. Please contact support.',
+                ], 400);
+            }
+
+            // Create payment request
+            $paymentsApi = $this->squareClient->payments;
+
+            $amountMoney = new Money([
+                'amount' => $amountInCents,
+                'currency' => 'USD',
+            ]);
+
+            $body = new CreatePaymentRequest([
+                'sourceId' => $validated['sourceId'],
+                'idempotencyKey' => uniqid(),
+                'amountMoney' => $amountMoney,
+                'locationId' => $locationId,
+                'note' => 'Gift card purchase',
+                'buyerEmailAddress' => $giftCardData['sender_email'],
+            ]);
+
+            $paymentResponse = $paymentsApi->create($body);
+
+            $errors = $paymentResponse->getErrors();
+            if (!empty($errors)) {
+                $errorMessage = $errors[0]->getDetail() ?? 'Payment failed';
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage,
+                ], 400);
+            }
+
+            $payment = $paymentResponse->getPayment();
+
+            // Create gift card
+            $giftCard = GiftCard::create([
+                'gift_card_number' => GiftCard::generateCardNumber(),
+                'pin' => GiftCard::generatePIN(),
+                'amount' => $giftCardData['amount'],
+                'original_purchase_amount' => $giftCardData['amount'],
+                'discount_applied' => $pricing['discount'],
+                'sender_name' => $giftCardData['sender_name'],
+                'sender_email' => $giftCardData['sender_email'],
+                'recipient_name' => $giftCardData['recipient_name'],
+                'recipient_email' => $giftCardData['recipient_email'] ?? null,
+                'recipient_phone' => $giftCardData['recipient_phone'] ?? null,
+                'delivery_method' => $giftCardData['delivery_method'],
+                'delivery_datetime' => $giftCardData['delivery_datetime'],
+                'message' => $giftCardData['message'] ?? null,
+                'status' => 'active',
+                'expires_at' => now()->addYears(2),
+                'square_payment_id' => $payment->getId(),
+                'square_receipt_url' => $payment->getReceiptUrl() ?? null,
+                'payment_status' => 'paid',
+            ]);
+
+            // Create transaction
+            \App\Models\GiftCardTransaction::create([
+                'gift_card_id' => $giftCard->id,
+                'type' => 'purchase',
+                'amount' => $giftCardData['amount'],
+                'discount_amount' => $pricing['discount'],
+                'final_paid_amount' => $pricing['final'],
+            ]);
+
+            // Send delivery email
+            try {
+                if ($giftCard->delivery_method === 'email' && $giftCard->recipient_email) {
+                    Mail::to($giftCard->recipient_email)->send(new \App\Mail\GiftCardDelivery($giftCard));
+                } elseif ($giftCard->delivery_method === 'self' && $giftCard->sender_email) {
+                    Mail::to($giftCard->sender_email)->send(new \App\Mail\GiftCardDelivery($giftCard));
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send gift card email: ' . $e->getMessage());
+            }
+
+            Session::forget('gift_card_data');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment successful!',
+                'gift_card_id' => $giftCard->id,
+                'redirect_url' => route('gift-cards.success', $giftCard->id),
+            ]);
+
+        } catch (SquareApiException $e) {
+            Log::error('Square API Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment failed: ' . $e->getMessage(),
+            ], 400);
+
+        } catch (\Exception $e) {
+            Log::error('Payment Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred. Please try again.',
+            ], 500);
+        }
+    }
+
+    /**
+     * Show success page after payment
+     */
+    public function success($bookingId)
+    {
+        $booking = Booking::findOrFail($bookingId);
+
+        return view('booking.success', [
+            'booking' => $booking,
+        ]);
+    }
+
+    /**
+     * Handle payment cancellation
+     */
+    public function cancel()
+    {
+        return view('booking.cancel');
+    }
+
+    /**
+     * Refund a payment (if needed)
+     */
+    public function refundPayment($bookingId)
+    {
+        try {
+            $booking = Booking::findOrFail($bookingId);
+
+            if ($booking->payment_status !== 'paid') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This booking cannot be refunded.',
+                ], 400);
+            }
+
+            $refundsApi = $this->squareClient->refunds;
+
+            $amountMoney = new Money([
+                'amount' => (int)($booking->total_price * 100),
+                'currency' => 'USD',
+            ]);
+
+            $body = new RefundPaymentRequest([
+                'idempotencyKey' => uniqid(),
+                'amountMoney' => $amountMoney,
+                'paymentId' => $booking->square_payment_id,
+                'reason' => 'Customer requested refund',
+            ]);
+
+            $refundResponse = $refundsApi->refundPayment($body);
+
+            $errors = $refundResponse->getErrors();
+            if (!empty($errors)) {
+                $errorMessage = $errors[0]->getDetail() ?? 'Refund failed';
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage,
+                ], 400);
+            }
+
+            $refund = $refundResponse->getRefund();
+
+            // Update booking status
+            $booking->update([
+                'payment_status' => 'refunded',
+                'square_refund_id' => $refund->getId(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Refund processed successfully.',
+            ]);
+
+        } catch (SquareApiException $e) {
+            Log::error('Refund Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Refund failed: ' . $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Verify payment status (useful for double-checking)
+     */
+    public function verifyPayment($paymentId)
+    {
+        try {
+            $paymentsApi = $this->squareClient->payments;
+            $request = new GetPaymentsRequest([
+                'paymentId' => $paymentId,
+            ]);
+            $response = $paymentsApi->get($request);
+            
+            $errors = $response->getErrors();
+            if (!empty($errors)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Could not verify payment.',
+                ], 400);
+            }
+
+            $payment = $response->getPayment();
+
+            return response()->json([
+                'success' => true,
+                'status' => $payment->getStatus(),
+                'amount' => $payment->getAmountMoney()->getAmount() / 100,
+            ]);
+
+        } catch (SquareApiException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Could not verify payment.',
+            ], 400);
+        }
+    }
+
+    /**
+     * Handle Square webhook notifications
+     */
+    public function handleWebhook(Request $request)
+    {
+        try {
+            $signature = $request->header('X-Square-Signature');
+            $body = $request->getContent();
+            
+            // Verify webhook signature (implement based on Square's webhook verification)
+            // For now, we'll process the webhook
+            
+            $data = json_decode($body, true);
+            
+            if (isset($data['type']) && $data['type'] === 'payment.updated') {
+                $paymentId = $data['data']['object']['payment']['id'];
+                $status = $data['data']['object']['payment']['status'];
+                
+                // Update booking if exists
+                $booking = Booking::where('square_payment_id', $paymentId)->first();
+                if ($booking) {
+                    $paymentStatus = match($status) {
+                        'COMPLETED' => 'paid',
+                        'FAILED', 'CANCELED' => 'failed',
+                        default => 'pending',
+                    };
+                    $booking->update(['payment_status' => $paymentStatus]);
+                }
+                
+                // Update gift card if exists
+                $giftCard = GiftCard::where('square_payment_id', $paymentId)->first();
+                if ($giftCard) {
+                    $paymentStatus = match($status) {
+                        'COMPLETED' => 'paid',
+                        'FAILED', 'CANCELED' => 'failed',
+                        default => 'pending',
+                    };
+                    $giftCard->update(['payment_status' => $paymentStatus]);
+                }
+            }
+            
+            return response()->json(['success' => true], 200);
+            
+        } catch (\Exception $e) {
+            Log::error('Webhook Error: ' . $e->getMessage());
+            return response()->json(['error' => 'Webhook processing failed'], 500);
+        }
+    }
+}
