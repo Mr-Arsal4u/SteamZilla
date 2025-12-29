@@ -164,6 +164,7 @@ class AdminController extends Controller
         $paymentStats = [
             'total_revenue' => Booking::where('status', '!=', 'cancelled')->sum('total_price'),
             'card_payments' => Booking::where('payment_method', 'card')->where('status', '!=', 'cancelled')->sum('total_price'),
+            'square_payments' => Booking::where('payment_method', 'square')->where('status', '!=', 'cancelled')->sum('total_price'),
             'gift_card_payments' => Booking::where('payment_method', 'gift_card')->where('status', '!=', 'cancelled')->sum('total_price'),
             'gift_card_discounts' => Booking::where('payment_method', 'gift_card')->sum('gift_card_discount'),
         ];
