@@ -27,6 +27,10 @@ class Booking extends Model
         'payment_method',
         'gift_card_id',
         'gift_card_discount',
+        'square_payment_id',
+        'square_receipt_url',
+        'square_refund_id',
+        'payment_status',
     ];
 
     protected $casts = [

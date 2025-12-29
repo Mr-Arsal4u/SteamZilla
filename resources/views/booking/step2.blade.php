@@ -53,20 +53,22 @@
                 <div class="mb-10">
                     <label class="block text-lg font-semibold text-gray-900 mb-4">Vehicle Type *</label>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        @php
-                            $vehicleTypes = ['Sedan', 'SUV', 'Truck', 'Van', 'Coupe', 'Convertible', 'Hatchback', 'Other'];
-                        @endphp
-                        @foreach($vehicleTypes as $type)
+                        @forelse($vehicleTypes as $vehicleType)
                             <label class="vehicle-type-card cursor-pointer">
-                                <input type="radio" name="vehicle_type" value="{{ $type }}" 
-                                    {{ old('vehicle_type', $bookingData['vehicle_type'] ?? '') === $type ? 'checked' : '' }}
+                                <input type="radio" name="vehicle_type_id" value="{{ $vehicleType->id }}" 
+                                    {{ old('vehicle_type_id', $bookingData['vehicle_type_id'] ?? '') == $vehicleType->id ? 'checked' : '' }}
                                     required class="hidden" onchange="updateTotal()">
                                 <div class="border-2 border-gray-300 rounded-lg p-4 text-center hover:border-[#45A247] transition">
                                     <i class="fas fa-car text-3xl text-gray-400 mb-2"></i>
-                                    <div class="font-semibold text-gray-900">{{ $type }}</div>
+                                    <div class="font-semibold text-gray-900">{{ $vehicleType->name }}</div>
+                                    @if($vehicleType->description)
+                                        <div class="text-xs text-gray-500 mt-1">{{ Str::limit($vehicleType->description, 30) }}</div>
+                                    @endif
                                 </div>
                             </label>
-                        @endforeach
+                        @empty
+                            <div class="col-span-full text-center text-gray-500 py-4">No vehicle types available. Please contact support.</div>
+                        @endforelse
                     </div>
                 </div>
 

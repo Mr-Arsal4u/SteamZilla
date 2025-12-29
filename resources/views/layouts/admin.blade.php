@@ -33,6 +33,12 @@
                 <a href="{{ route('admin.addons') }}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.addons*') ? 'bg-gray-800 text-white border-r-4 border-[#45A247]' : '' }}">
                     <i class="fas fa-plus-circle w-5 mr-3"></i> Add-Ons
                 </a>
+                <a href="{{ route('admin.vehicle-types') }}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.vehicle-types*') ? 'bg-gray-800 text-white border-r-4 border-[#45A247]' : '' }}">
+                    <i class="fas fa-car w-5 mr-3"></i> Vehicle Types
+                </a>
+                <a href="{{ route('admin.time-slots') }}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.time-slots*') ? 'bg-gray-800 text-white border-r-4 border-[#45A247]' : '' }}">
+                    <i class="fas fa-clock w-5 mr-3"></i> Time Slots
+                </a>
                 <div class="px-6 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Locations</div>
                 <a href="{{ route('admin.countries') }}" class="flex items-center px-6 py-3 pl-12 text-gray-300 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.countries*') ? 'bg-gray-800 text-white border-r-4 border-[#45A247]' : '' }}">
                     <i class="fas fa-globe w-5 mr-3"></i> Countries
