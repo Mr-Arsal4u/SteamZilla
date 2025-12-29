@@ -4,18 +4,18 @@
 
 @section('content')
 <!-- Hero Section -->
-<section class="bg-gradient-to-br from-green-50 to-white py-16">
+<section class="bg-gradient-to-br from-green-50 to-white py-12 sm:py-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h1 class="text-4xl md:text-6xl font-black text-gray-900 mb-6">Contact Us</h1>
-        <p class="text-xl text-gray-600">Have a question or query? We'd love to hear from you!</p>
+        <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 mb-4 sm:mb-6">Contact Us</h1>
+        <p class="text-base sm:text-lg md:text-xl text-gray-600 px-4">Have a question or query? We'd love to hear from you!</p>
     </div>
 </section>
 
 <!-- Contact Form Section -->
-<section class="py-20 bg-white">
+<section class="py-12 sm:py-16 md:py-20 bg-white">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white rounded-2xl shadow-lg p-8 md:p-12">
-            <h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Send Us a Message</h2>
+        <div class="bg-white rounded-xl sm:rounded-2xl shadow-lg p-6 sm:p-8 md:p-12">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 text-center">Send Us a Message</h2>
             
             @if(session('success'))
                 <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6">
@@ -36,7 +36,7 @@
             <form action="{{ route('contact.submit') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-6">
                     <!-- Name -->
                     <div>
                         <label for="name" class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
@@ -97,7 +97,7 @@
                 <!-- Submit Button -->
                 <div class="text-center">
                     <button type="submit" 
-                            class="bg-[#45A247] text-white px-10 py-4 rounded-full text-lg font-semibold hover:bg-[#3a8a3c] transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl">
+                            class="bg-[#45A247] text-white px-6 sm:px-8 md:px-10 py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold hover:bg-[#3a8a3c] transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl w-full sm:w-auto">
                         Send Message
                     </button>
                 </div>
@@ -108,11 +108,11 @@
 
 <!-- Contact Information Section -->
 @if($contactEmail || $contactPhone || $contactAddress)
-<section class="py-20 bg-gray-50">
+<section class="py-12 sm:py-16 md:py-20 bg-gray-50">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-900">Get in Touch</h2>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8 sm:mb-12 text-gray-900">Get in Touch</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 text-center">
             @if($contactEmail)
             <div>
                 <div class="w-16 h-16 bg-[#45A247] rounded-full flex items-center justify-center mx-auto mb-4">

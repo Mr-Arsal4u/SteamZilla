@@ -149,6 +149,14 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::post('/time-slots/{id}', [AdminController::class, 'updateTimeSlot'])->name('time-slots.update');
     Route::delete('/time-slots/{id}', [AdminController::class, 'deleteTimeSlot'])->name('time-slots.delete');
 
+    // Social Links Management
+    Route::get('/social-links', [AdminController::class, 'socialLinks'])->name('social-links');
+    Route::get('/social-links/create', [AdminController::class, 'createSocialLink'])->name('social-links.create');
+    Route::post('/social-links', [AdminController::class, 'storeSocialLink'])->name('social-links.store');
+    Route::get('/social-links/{id}/edit', [AdminController::class, 'editSocialLink'])->name('social-links.edit');
+    Route::post('/social-links/{id}', [AdminController::class, 'updateSocialLink'])->name('social-links.update');
+    Route::delete('/social-links/{id}', [AdminController::class, 'deleteSocialLink'])->name('social-links.delete');
+
     // Admin routes (optional)
     Route::post('/refund/{id}', [PaymentController::class, 'refundPayment'])->name('payment.refund');
     Route::get('/verify-payment/{id}', [PaymentController::class, 'verifyPayment'])->name('payment.verify');

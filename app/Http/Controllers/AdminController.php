@@ -16,6 +16,7 @@ use App\Models\City;
 use App\Models\Place;
 use App\Models\VehicleType;
 use App\Models\TimeSlot;
+use App\Models\SocialLink;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -900,5 +901,79 @@ class AdminController extends Controller
         $timeSlot = TimeSlot::findOrFail($id);
         $timeSlot->delete();
         return redirect()->route('admin.time-slots')->with('success', 'Time slot deleted successfully.');
+    }
+
+    // ==================== SOCIAL LINKS MANAGEMENT ====================
+    public function socialLinks()
+    {
+        $socialLinks = SocialLink::orderBy('sort_order')->orderBy('platform')->get();
+        return view('admin.social-links.index', compact('socialLinks'));
+    }
+
+    public function createSocialLink()
+    {
+        return view('admin.social-links.create');
+    }
+
+    public function storeSocialLink(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'platform' => 'required|string|max:255',
+            'url' => 'required|url|max:500',
+            'icon' => 'nullable|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        SocialLink::create([
+            'platform' => $request->platform,
+            'url' => $request->url,
+            'icon' => $request->icon,
+            'sort_order' => $request->sort_order ?? 0,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->route('admin.social-links')->with('success', 'Social link created successfully.');
+    }
+
+    public function editSocialLink($id)
+    {
+        $socialLink = SocialLink::findOrFail($id);
+        return view('admin.social-links.edit', compact('socialLink'));
+    }
+
+    public function updateSocialLink(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'platform' => 'required|string|max:255',
+            'url' => 'required|url|max:500',
+            'icon' => 'nullable|string|max:255',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $socialLink = SocialLink::findOrFail($id);
+        $socialLink->update([
+            'platform' => $request->platform,
+            'url' => $request->url,
+            'icon' => $request->icon,
+            'sort_order' => $request->sort_order ?? 0,
+            'is_active' => $request->has('is_active'),
+        ]);
+
+        return redirect()->route('admin.social-links')->with('success', 'Social link updated successfully.');
+    }
+
+    public function deleteSocialLink($id)
+    {
+        $socialLink = SocialLink::findOrFail($id);
+        $socialLink->delete();
+        return redirect()->route('admin.social-links')->with('success', 'Social link deleted successfully.');
     }
 }
