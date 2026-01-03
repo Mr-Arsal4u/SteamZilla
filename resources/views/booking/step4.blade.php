@@ -78,10 +78,10 @@
 
                         <!-- Payment Method Selection -->
                         <div class="mb-8">
-                            <label class="block text-sm font-medium text-gray-700 mb-4">Payment Method *</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-4">Payment Method * <span class="text-red-500">(Please select one)</span></label>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition {{ old('payment_method') === 'square' ? 'border-[#45A247] bg-green-50' : 'border-gray-300' }}">
-                                    <input type="radio" name="payment_method" value="square" {{ old('payment_method') === 'square' ? 'checked' : '' }} required class="sr-only">
+                                    <input type="checkbox" name="payment_method" value="square" {{ old('payment_method') === 'square' ? 'checked' : '' }} class="w-5 h-5 text-[#45A247] border-gray-300 rounded focus:ring-[#45A247] mr-3 payment-method-checkbox">
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between">
                                             <span class="text-lg font-semibold text-gray-900">Pay Now (Square)</span>
@@ -89,12 +89,9 @@
                                         </div>
                                         <p class="text-sm text-gray-600 mt-1">Secure online payment via Square</p>
                                     </div>
-                                    <div class="ml-4">
-                                        <i class="fas fa-check-circle text-[#45A247] text-xl {{ old('payment_method') === 'square' ? '' : 'hidden' }}"></i>
-                                    </div>
                                 </label>
-                                <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition {{ old('payment_method') === 'cash' ? 'border-[#45A247] bg-green-50' : 'border-gray-300' }}">
-                                    <input type="radio" name="payment_method" value="cash" {{ old('payment_method') === 'cash' || old('payment_method') === null ? 'checked' : '' }} required class="sr-only">
+                                <label class="relative flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition {{ old('payment_method') === 'cash' || old('payment_method') === null ? 'border-[#45A247] bg-green-50' : 'border-gray-300' }}">
+                                    <input type="checkbox" name="payment_method" value="cash" {{ old('payment_method') === 'cash' || old('payment_method') === null ? 'checked' : '' }} class="w-5 h-5 text-[#45A247] border-gray-300 rounded focus:ring-[#45A247] mr-3 payment-method-checkbox">
                                     <div class="flex-1">
                                         <div class="flex items-center justify-between">
                                             <span class="text-lg font-semibold text-gray-900">Pay on Service</span>
@@ -102,25 +99,71 @@
                                         </div>
                                         <p class="text-sm text-gray-600 mt-1">Pay when our team arrives</p>
                                     </div>
-                                    <div class="ml-4">
-                                        <i class="fas fa-check-circle text-[#45A247] text-xl {{ old('payment_method') === 'cash' || old('payment_method') === null ? '' : 'hidden' }}"></i>
-                                    </div>
                                 </label>
                             </div>
+                            <p id="payment-method-error" class="text-red-600 text-sm mt-2 hidden">Please select one payment method</p>
                         </div>
 
                         <script>
-                            document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
-                                radio.addEventListener('change', function() {
-                                    document.querySelectorAll('label').forEach(label => {
-                                        if (label.querySelector('input[type="radio"]').checked) {
-                                            label.classList.add('border-[#45A247]', 'bg-green-50');
-                                            label.querySelector('.fa-check-circle').classList.remove('hidden');
+                            // Ensure exactly one payment method is always selected
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const checkboxes = document.querySelectorAll('.payment-method-checkbox');
+                                
+                                // Ensure at least one is checked on page load
+                                const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+                                if (checkedCount === 0) {
+                                    // Default to cash if nothing is checked
+                                    const cashCheckbox = document.querySelector('input[value="cash"]');
+                                    if (cashCheckbox) {
+                                        cashCheckbox.checked = true;
+                                        cashCheckbox.closest('label').classList.add('border-[#45A247]', 'bg-green-50');
+                                        cashCheckbox.closest('label').classList.remove('border-gray-300');
+                                    }
+                                }
+                                
+                                checkboxes.forEach(checkbox => {
+                                    checkbox.addEventListener('change', function() {
+                                        const errorMsg = document.getElementById('payment-method-error');
+                                        
+                                        // If this checkbox is checked, uncheck the other one
+                                        if (this.checked) {
+                                            checkboxes.forEach(other => {
+                                                if (other !== this) {
+                                                    other.checked = false;
+                                                    other.closest('label').classList.remove('border-[#45A247]', 'bg-green-50');
+                                                    other.closest('label').classList.add('border-gray-300');
+                                                }
+                                            });
+                                            // Update current label styling
+                                            this.closest('label').classList.add('border-[#45A247]', 'bg-green-50');
+                                            this.closest('label').classList.remove('border-gray-300');
+                                            errorMsg.classList.add('hidden');
                                         } else {
-                                            label.classList.remove('border-[#45A247]', 'bg-green-50');
-                                            label.querySelector('.fa-check-circle').classList.add('hidden');
+                                            // Prevent unchecking if it's the only one checked
+                                            const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+                                            if (checkedCount === 0) {
+                                                // Re-check this one to ensure at least one is always selected
+                                                this.checked = true;
+                                                this.closest('label').classList.add('border-[#45A247]', 'bg-green-50');
+                                                this.closest('label').classList.remove('border-gray-300');
+                                                errorMsg.classList.add('hidden');
+                                            } else {
+                                                this.closest('label').classList.remove('border-[#45A247]', 'bg-green-50');
+                                                this.closest('label').classList.add('border-gray-300');
+                                            }
                                         }
                                     });
+                                });
+                                
+                                // Validate on form submit
+                                document.querySelector('form').addEventListener('submit', function(e) {
+                                    const checkedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
+                                    if (checkedCount !== 1) {
+                                        e.preventDefault();
+                                        const errorMsg = document.getElementById('payment-method-error');
+                                        errorMsg.classList.remove('hidden');
+                                        return false;
+                                    }
                                 });
                             });
                         </script>

@@ -267,12 +267,25 @@ class BookingController extends Controller
 
     public function step4Store(Request $request)
     {
+        // Handle checkbox input (may be array or single value)
+        $paymentMethod = $request->payment_method;
+        if (is_array($paymentMethod)) {
+            // Ensure exactly one is selected
+            $paymentMethod = count($paymentMethod) === 1 ? $paymentMethod[0] : null;
+        }
+        
+        // Validate payment method is selected
+        if (empty($paymentMethod) || !in_array($paymentMethod, ['square', 'cash'])) {
+            return redirect()->route('booking.step4')
+                ->withErrors(['payment_method' => 'Please select one payment method.'])
+                ->withInput();
+        }
+        
         $validator = Validator::make($request->all(), [
             'user_name' => 'required|string|max:255',
             'user_email' => 'required|email|max:255',
             'user_phone' => 'required|string|max:20',
             'notes' => 'nullable|string',
-            'payment_method' => 'required|in:square,cash',
         ]);
 
         if ($validator->fails()) {
@@ -297,7 +310,7 @@ class BookingController extends Controller
         $bookingData['user_email'] = $request->user_email;
         $bookingData['user_phone'] = $request->user_phone;
         $bookingData['notes'] = $request->notes;
-        $bookingData['payment_method'] = $request->payment_method;
+        $bookingData['payment_method'] = $paymentMethod;
         Session::put('booking_data', $bookingData);
 
         // If Square payment, redirect to payment page

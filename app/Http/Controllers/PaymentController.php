@@ -39,6 +39,83 @@ class PaymentController extends Controller
     }
 
     /**
+     * Get user-friendly error message from Square error codes
+     */
+    private function getFriendlyErrorMessage($errors)
+    {
+        if (empty($errors)) {
+            return 'We encountered an issue processing your payment. Please try again or contact support.';
+        }
+
+        $errorCodes = [];
+        $errorMessages = [];
+
+        foreach ($errors as $error) {
+            $code = $error->getCode() ?? '';
+            $detail = $error->getDetail() ?? '';
+            $category = $error->getCategory() ?? '';
+
+            $errorCodes[] = $code;
+
+            // Map error codes to user-friendly messages
+            switch ($code) {
+                case 'CVV_FAILURE':
+                    $errorMessages[] = 'The security code (CVV) on your card is incorrect. Please check and try again.';
+                    break;
+                case 'GENERIC_DECLINE':
+                case 'CARD_DECLINED':
+                case 'PROCESSOR_DECLINE':
+                    $errorMessages[] = 'Your card was declined. Please check your card details or try a different payment method.';
+                    break;
+                case 'INSUFFICIENT_FUNDS':
+                    $errorMessages[] = 'Your card has insufficient funds. Please use a different payment method.';
+                    break;
+                case 'EXPIRED_CARD':
+                    $errorMessages[] = 'Your card has expired. Please use a different card.';
+                    break;
+                case 'INVALID_EXPIRATION':
+                    $errorMessages[] = 'The card expiration date is invalid. Please check and try again.';
+                    break;
+                case 'INVALID_POSTAL_CODE':
+                    $errorMessages[] = 'The postal code you entered is invalid. Please check and try again.';
+                    break;
+                case 'ADDRESS_VERIFICATION_FAILURE':
+                    $errorMessages[] = 'The billing address could not be verified. Please check your address and try again.';
+                    break;
+                case 'CARD_NOT_SUPPORTED':
+                    $errorMessages[] = 'This card type is not supported. Please use a different payment method.';
+                    break;
+                case 'INVALID_CARD':
+                    $errorMessages[] = 'The card information is invalid. Please check your card details and try again.';
+                    break;
+                case 'PAYMENT_METHOD_ERROR':
+                    if (strpos($detail, 'CVV') !== false) {
+                        $errorMessages[] = 'The security code (CVV) on your card is incorrect. Please check and try again.';
+                    } else {
+                        $errorMessages[] = 'There was an issue with your payment method. Please check your card details and try again.';
+                    }
+                    break;
+                default:
+                    // For unknown errors, provide a generic but helpful message
+                    if (!empty($detail) && strpos($detail, 'Authorization error') === false) {
+                        // Use detail if it's user-friendly, otherwise use generic message
+                        $errorMessages[] = 'We encountered an issue processing your payment. Please verify your card details and try again.';
+                    } else {
+                        $errorMessages[] = 'Your payment could not be processed. Please check your card details or try a different payment method.';
+                    }
+                    break;
+            }
+        }
+
+        // Return the first meaningful error message, or a generic one
+        if (!empty($errorMessages)) {
+            return $errorMessages[0];
+        }
+
+        return 'We encountered an issue processing your payment. Please try again or contact support if the problem persists.';
+    }
+
+    /**
      * Show payment page for booking
      */
     public function showPaymentPage(Request $request)
@@ -196,7 +273,18 @@ class PaymentController extends Controller
 
             $errors = $paymentResponse->getErrors();
             if (!empty($errors)) {
-                $errorMessage = $errors[0]->getDetail() ?? 'Payment failed';
+                // Log full error details for debugging
+                Log::error('Square Payment Error (Booking)', [
+                    'errors' => array_map(function($error) {
+                        return [
+                            'code' => $error->getCode(),
+                            'detail' => $error->getDetail(),
+                            'category' => $error->getCategory(),
+                        ];
+                    }, $errors),
+                ]);
+
+                $errorMessage = $this->getFriendlyErrorMessage($errors);
                 
                 return response()->json([
                     'success' => false,
@@ -238,11 +326,30 @@ class PaymentController extends Controller
             ]);
 
         } catch (SquareApiException $e) {
-            Log::error('Square API Error: ' . $e->getMessage());
+            // Log full error details for debugging
+            Log::error('Square API Exception (Booking)', [
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
+
+            // Provide user-friendly error message
+            $errorMessage = 'We encountered an issue processing your payment. Please verify your card details and try again.';
+            
+            // Try to extract error code from message if possible
+            $message = $e->getMessage();
+            if (stripos($message, 'CVV') !== false || stripos($message, 'cvv') !== false) {
+                $errorMessage = 'The security code (CVV) on your card is incorrect. Please check and try again.';
+            } elseif (stripos($message, 'decline') !== false || stripos($message, 'DECLINE') !== false) {
+                $errorMessage = 'Your card was declined. Please check your card details or try a different payment method.';
+            } elseif (stripos($message, 'insufficient') !== false || stripos($message, 'funds') !== false) {
+                $errorMessage = 'Your card has insufficient funds. Please use a different payment method.';
+            } elseif (stripos($message, 'expired') !== false) {
+                $errorMessage = 'Your card has expired. Please use a different card.';
+            }
 
             return response()->json([
                 'success' => false,
-                'message' => 'Payment failed: ' . $e->getMessage(),
+                'message' => $errorMessage,
             ], 400);
 
         } catch (\Exception $e) {
@@ -367,7 +474,18 @@ class PaymentController extends Controller
 
             $errors = $paymentResponse->getErrors();
             if (!empty($errors)) {
-                $errorMessage = $errors[0]->getDetail() ?? 'Payment failed';
+                // Log full error details for debugging
+                Log::error('Square Payment Error (Gift Card)', [
+                    'errors' => array_map(function($error) {
+                        return [
+                            'code' => $error->getCode(),
+                            'detail' => $error->getDetail(),
+                            'category' => $error->getCategory(),
+                        ];
+                    }, $errors),
+                ]);
+
+                $errorMessage = $this->getFriendlyErrorMessage($errors);
                 
                 return response()->json([
                     'success' => false,
@@ -429,11 +547,30 @@ class PaymentController extends Controller
             ]);
 
         } catch (SquareApiException $e) {
-            Log::error('Square API Error: ' . $e->getMessage());
+            // Log full error details for debugging
+            Log::error('Square API Exception (Gift Card)', [
+                'message' => $e->getMessage(),
+                'exception' => get_class($e),
+            ]);
+
+            // Provide user-friendly error message
+            $errorMessage = 'We encountered an issue processing your payment. Please verify your card details and try again.';
+            
+            // Try to extract error code from message if possible
+            $message = $e->getMessage();
+            if (stripos($message, 'CVV') !== false || stripos($message, 'cvv') !== false) {
+                $errorMessage = 'The security code (CVV) on your card is incorrect. Please check and try again.';
+            } elseif (stripos($message, 'decline') !== false || stripos($message, 'DECLINE') !== false) {
+                $errorMessage = 'Your card was declined. Please check your card details or try a different payment method.';
+            } elseif (stripos($message, 'insufficient') !== false || stripos($message, 'funds') !== false) {
+                $errorMessage = 'Your card has insufficient funds. Please use a different payment method.';
+            } elseif (stripos($message, 'expired') !== false) {
+                $errorMessage = 'Your card has expired. Please use a different card.';
+            }
 
             return response()->json([
                 'success' => false,
-                'message' => 'Payment failed: ' . $e->getMessage(),
+                'message' => $errorMessage,
             ], 400);
 
         } catch (\Exception $e) {
