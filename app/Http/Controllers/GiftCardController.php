@@ -199,6 +199,7 @@ class GiftCardController extends Controller
             'applicationId' => config('services.square.application_id'),
             'locationId' => config('services.square.location_id'),
             'giftCardData' => $giftCardData,
+            'environment' => config('services.square.environment', 'sandbox'),
         ]);
     }
 

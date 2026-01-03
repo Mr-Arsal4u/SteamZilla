@@ -44,11 +44,30 @@ class PaymentController extends Controller
     public function showPaymentPage(Request $request)
     {
         // Get booking details from session
-        $bookingData = Session::get('booking_data');
+        $bookingData = Session::get('booking_data', []);
 
-        if (empty($bookingData)) {
+        // Log session data for debugging
+        Log::info('Payment page - booking data check', [
+            'has_data' => !empty($bookingData),
+            'keys' => !empty($bookingData) ? array_keys($bookingData) : [],
+            'address' => $bookingData['address'] ?? 'missing',
+            'package_id' => $bookingData['package_id'] ?? 'missing',
+            'total_price' => $bookingData['total_price'] ?? 'missing',
+        ]);
+
+        // Check if essential booking data is present
+        if (empty($bookingData) || 
+            !isset($bookingData['address']) || 
+            empty($bookingData['address']) ||
+            !isset($bookingData['package_id']) || 
+            !isset($bookingData['total_price']) ||
+            !isset($bookingData['vehicle_type'])) {
+            Log::warning('Payment page accessed with incomplete booking data', [
+                'booking_data_keys' => array_keys($bookingData ?? []),
+                'session_id' => Session::getId(),
+            ]);
             return redirect()->route('booking.step1')
-                ->with('error', 'Please complete the booking steps first.');
+                ->with('error', 'Please complete the booking steps first. Your session may have expired.');
         }
 
         $applicationId = config('services.square.application_id');
@@ -80,6 +99,7 @@ class PaymentController extends Controller
             'applicationId' => $applicationId,
             'locationId' => $locationId,
             'bookingData' => $bookingData,
+            'environment' => config('services.square.environment', 'sandbox'),
         ]);
     }
 

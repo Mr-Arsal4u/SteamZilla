@@ -62,7 +62,7 @@ class BookingController extends Controller
             'country_id' => 'required|exists:countries,id',
             'city_id' => 'required|exists:cities,id',
             'place_id' => 'required|exists:places,id',
-            'address' => 'nullable|string|max:500',
+            'address' => 'required|string|max:500',
         ]);
 
         if ($validator->fails()) {
@@ -72,11 +72,16 @@ class BookingController extends Controller
         }
 
         $place = Place::with(['city.country'])->findOrFail($request->place_id);
+        $city = City::with('country')->findOrFail($request->city_id);
+        $country = Country::findOrFail($request->country_id);
         
         $bookingData = Session::get('booking_data', []);
         $bookingData['country_id'] = $request->country_id;
+        $bookingData['country_name'] = $country->name;
         $bookingData['city_id'] = $request->city_id;
+        $bookingData['city_name'] = $city->name;
         $bookingData['place_id'] = $request->place_id;
+        $bookingData['place_name'] = $place->name;
         
         // Build address from place data
         $addressParts = [];
@@ -277,6 +282,15 @@ class BookingController extends Controller
         }
 
         $bookingData = Session::get('booking_data', []);
+        
+        // Validate that we have the required booking data from previous steps
+        if (empty($bookingData) || 
+            !isset($bookingData['address']) || 
+            !isset($bookingData['package_id']) || 
+            !isset($bookingData['total_price'])) {
+            return redirect()->route('booking.step1')
+                ->with('error', 'Your booking session expired. Please start over.');
+        }
         
         // Store user info in session for payment processing
         $bookingData['user_name'] = $request->user_name;
