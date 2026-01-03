@@ -77,6 +77,21 @@
                             <p class="font-semibold text-gray-900 text-sm">{{ $bookingData['address'] ?? 'N/A' }}</p>
                         </div>
                         
+                        @if(isset($bookingData['country_name']) || isset($bookingData['city_name']) || isset($bookingData['place_name']))
+                            <div>
+                                <p class="text-sm text-gray-600 mb-1">Location Details</p>
+                                @if(isset($bookingData['country_name']))
+                                    <p class="text-xs text-gray-700"><span class="font-semibold">Country:</span> {{ $bookingData['country_name'] }}</p>
+                                @endif
+                                @if(isset($bookingData['city_name']))
+                                    <p class="text-xs text-gray-700"><span class="font-semibold">City:</span> {{ $bookingData['city_name'] }}</p>
+                                @endif
+                                @if(isset($bookingData['place_name']))
+                                    <p class="text-xs text-gray-700"><span class="font-semibold">Service Area:</span> {{ $bookingData['place_name'] }}</p>
+                                @endif
+                            </div>
+                        @endif
+                        
                         <div>
                             <p class="text-sm text-gray-600 mb-1">Vehicle Type</p>
                             <p class="font-semibold text-gray-900">{{ $bookingData['vehicle_type'] ?? 'N/A' }}</p>
@@ -134,7 +149,7 @@
 </div>
 
 <!-- Square Web Payments SDK -->
-<script type="text/javascript" src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+<script type="text/javascript" src="https://{{ $environment === 'production' ? 'web' : 'sandbox.web' }}.squarecdn.com/v1/square.js"></script>
 <script>
     const applicationId = '{{ $applicationId }}';
     const locationId = '{{ $locationId }}';

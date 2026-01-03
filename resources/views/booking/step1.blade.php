@@ -103,11 +103,12 @@
                     </div>
 
                     <div>
-                        <label for="address" class="block text-lg font-semibold text-gray-900 mb-3">Additional Address Details (Optional)</label>
+                        <label for="address" class="block text-lg font-semibold text-gray-900 mb-3">Additional Address Details *</label>
                         <textarea 
                             id="address" 
                             name="address" 
                             rows="2"
+                            required
                             placeholder="Enter any additional address details (e.g., apartment number, building name)"
                             class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#45A247] focus:border-[#45A247] transition">{{ old('address', $bookingData['address'] ?? '') }}</textarea>
                     </div>

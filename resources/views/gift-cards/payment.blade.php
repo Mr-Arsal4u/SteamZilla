@@ -88,7 +88,7 @@
 </div>
 
 <!-- Square Web Payments SDK -->
-<script type="text/javascript" src="https://sandbox.web.squarecdn.com/v1/square.js"></script>
+<script type="text/javascript" src="https://{{ $environment === 'production' ? 'web' : 'sandbox.web' }}.squarecdn.com/v1/square.js"></script>
 <script>
     const applicationId = '{{ $applicationId }}';
     const locationId = '{{ $locationId }}';
