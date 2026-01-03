@@ -44,7 +44,7 @@
                             <div id="card-container" class="p-4 border border-gray-300 rounded-lg bg-white">
                                 <!-- Square Card form will be inserted here -->
                             </div>
-                            <div id="card-errors" class="mt-2 text-sm text-red-600"></div>
+                            <div id="card-errors" class="mt-2 text-sm text-red-600 font-medium hidden"></div>
                         </div>
 
                         <!-- Submit Button -->
@@ -226,22 +226,27 @@
     
     function showError(message) {
         const errorDiv = document.getElementById('card-errors');
-        errorDiv.textContent = message;
+        errorDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>' + message;
         errorDiv.classList.remove('hidden');
+        errorDiv.classList.add('flex', 'items-center');
     }
     
     function hideError() {
         const errorDiv = document.getElementById('card-errors');
         errorDiv.textContent = '';
         errorDiv.classList.add('hidden');
+        errorDiv.classList.remove('flex', 'items-center');
     }
     
     function showStatusMessage(message, type = 'error') {
         const statusDiv = document.getElementById('payment-status-message');
-        statusDiv.className = type === 'success' 
-            ? 'bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg' 
-            : 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg';
-        statusDiv.textContent = message;
+        if (type === 'success') {
+            statusDiv.className = 'bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg flex items-center';
+            statusDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>' + message;
+        } else {
+            statusDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg flex items-center';
+            statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>' + message;
+        }
         statusDiv.classList.remove('hidden');
     }
     
