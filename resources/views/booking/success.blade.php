@@ -60,19 +60,21 @@
                 </div>
             </div>
             
-            <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mb-6">
-                <div class="flex items-start">
-                    <i class="fas fa-info-circle text-blue-600 text-2xl mr-4 mt-1"></i>
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Payment Information</h3>
-                        <p class="text-gray-700 leading-relaxed">
-                            <strong>Our employee will contact you for the payment</strong> after confirming your booking. You can pay via cash, card, or other accepted payment methods when our team arrives for the service.
-                        </p>
+            @if($booking->payment_status === 'paid')
+                <div class="bg-green-50 border-2 border-green-200 rounded-xl p-6 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-check-circle text-green-600 text-2xl mr-4 mt-1"></i>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Payment Confirmed</h3>
+                            <p class="text-gray-700 leading-relaxed">
+                                Your payment has been successfully processed. A confirmation email with your receipt has been sent to your email address.
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            @endif
             
-            <p class="text-gray-600 mb-6">We'll send you a confirmation email shortly. Our team will contact you to confirm your appointment and arrange payment.</p>
+            <p class="text-gray-600 mb-6">We'll send you a confirmation email shortly. Our team will contact you to confirm your appointment.</p>
             
             <a href="{{ route('home') }}" class="inline-block bg-green-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-green-700 transition shadow-lg">
                 Return to Home

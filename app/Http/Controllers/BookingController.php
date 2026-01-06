@@ -267,20 +267,6 @@ class BookingController extends Controller
 
     public function step4Store(Request $request)
     {
-        // Handle checkbox input (may be array or single value)
-        $paymentMethod = $request->payment_method;
-        if (is_array($paymentMethod)) {
-            // Ensure exactly one is selected
-            $paymentMethod = count($paymentMethod) === 1 ? $paymentMethod[0] : null;
-        }
-        
-        // Validate payment method is selected
-        if (empty($paymentMethod) || !in_array($paymentMethod, ['square', 'cash'])) {
-            return redirect()->route('booking.step4')
-                ->withErrors(['payment_method' => 'Please select one payment method.'])
-                ->withInput();
-        }
-        
         $validator = Validator::make($request->all(), [
             'user_name' => 'required|string|max:255',
             'user_email' => 'required|email|max:255',
@@ -310,62 +296,11 @@ class BookingController extends Controller
         $bookingData['user_email'] = $request->user_email;
         $bookingData['user_phone'] = $request->user_phone;
         $bookingData['notes'] = $request->notes;
-        $bookingData['payment_method'] = $paymentMethod;
+        $bookingData['payment_method'] = 'square'; // Always use Square payment
         Session::put('booking_data', $bookingData);
 
-        // If Square payment, redirect to payment page
-        if ($request->payment_method === 'square') {
-            return redirect()->route('booking.payment');
-        }
-
-        // Otherwise, create booking with cash payment (collected on service day)
-        $booking = Booking::create([
-            'user_name' => $request->user_name,
-            'user_email' => $request->user_email,
-            'user_phone' => $request->user_phone,
-            'address' => $bookingData['address'],
-            'latitude' => $bookingData['latitude'] ?? null,
-            'longitude' => $bookingData['longitude'] ?? null,
-            'place_id' => $bookingData['place_id'] ?? null,
-            'vehicle_type' => $bookingData['vehicle_type'],
-            'booking_date' => $bookingData['booking_date'],
-            'booking_time' => $bookingData['booking_time'],
-            'package_id' => $bookingData['package_id'],
-            'status' => 'pending',
-            'notes' => $request->notes,
-            'total_price' => $bookingData['total_price'],
-            'payment_method' => 'cash',
-            'gift_card_id' => null,
-            'gift_card_discount' => 0,
-            'payment_status' => 'pending',
-        ]);
-
-        // Attach addons
-        if (!empty($bookingData['addons'])) {
-            foreach ($bookingData['addons'] as $addonData) {
-                $booking->bookingAddons()->create([
-                    'addon_id' => $addonData['id'],
-                    'quantity' => $addonData['quantity'],
-                    'price_at_booking' => $addonData['price'],
-                ]);
-            }
-        }
-
-        // Send email notifications
-        try {
-            Mail::to($booking->user_email)->send(new BookingConfirmation($booking));
-            if (config('mail.admin_email')) {
-                Mail::to(config('mail.admin_email'))->send(new NewBookingNotification($booking));
-            }
-        } catch (\Exception $e) {
-            Log::error('Failed to send booking emails: ' . $e->getMessage());
-        }
-
-        // Clear session
-        Session::forget('booking_data');
-
-        return redirect()->route('booking.success', $booking->id)
-            ->with('success', 'Your booking has been confirmed! Our employee will contact you for payment.');
+        // Redirect to Square payment page
+        return redirect()->route('booking.payment');
     }
 
     // Legacy methods for backward compatibility
