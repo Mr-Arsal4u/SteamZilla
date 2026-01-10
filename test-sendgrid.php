@@ -28,23 +28,9 @@ if (!filter_var($testEmail, FILTER_VALIDATE_EMAIL)) {
 
 echo "🧪 Testing SendGrid Email Configuration...\n\n";
 
-// Set SendGrid credentials temporarily
-config([
-    'mail.default' => 'smtp',
-    'mail.mailers.smtp' => [
-        'transport' => 'smtp',
-        'host' => 'smtp.sendgrid.net',
-        'port' => 587,
-        'username' => 'apikey',
-        'password' => 'SG.your_sendgrid_api_key_here',
-        'encryption' => 'tls',
-        'timeout' => null,
-    ],
-    'mail.from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'mr.arsal69@gmail.com'), // Use verified email
-        'name' => env('MAIL_FROM_NAME', 'SteamZilla'),
-    ],
-]);
+// Use SendGrid credentials from .env file
+// Make sure your .env file has the SendGrid configuration set up
+// The script will use the configuration from your .env file
 
 echo "📋 Configuration:\n";
 echo "   Host: " . config('mail.mailers.smtp.host') . "\n";
