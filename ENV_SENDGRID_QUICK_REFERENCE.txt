@@ -1,0 +1,26 @@
+# ============================================
+# QUICK REFERENCE: SendGrid .env Configuration
+# ============================================
+# Copy these lines to your .env file
+# Replace the placeholder values with your actual SendGrid credentials
+
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.sendgrid.net
+MAIL_PORT=587
+MAIL_USERNAME=apikey
+MAIL_PASSWORD=SG.your_sendgrid_api_key_here
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@yourdomain.com
+MAIL_FROM_NAME="SteamZilla"
+MAIL_ADMIN_EMAIL=admin@yourdomain.com
+
+# ============================================
+# IMPORTANT NOTES:
+# ============================================
+# 1. MAIL_USERNAME must be exactly "apikey" (not your email!)
+# 2. MAIL_PASSWORD is your SendGrid API key (starts with SG.)
+# 3. MAIL_FROM_ADDRESS must be verified in SendGrid
+# 4. MAIL_ADMIN_EMAIL is where admin notifications go
+# 5. After updating .env, run: php artisan config:clear
+# ============================================
+

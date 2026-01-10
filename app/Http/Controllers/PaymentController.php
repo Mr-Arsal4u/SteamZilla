@@ -17,6 +17,7 @@ use App\Models\Booking;
 use App\Models\GiftCard;
 use App\Mail\BookingConfirmation;
 use App\Mail\NewBookingNotification;
+use App\Services\SmsService;
 
 class PaymentController extends Controller
 {
@@ -304,15 +305,8 @@ class PaymentController extends Controller
             // Save booking to database
             $booking = $this->saveBooking($bookingData, $validated, $payment);
 
-            // Send confirmation emails
-            try {
-                Mail::to($booking->user_email)->send(new BookingConfirmation($booking));
-                if (config('mail.admin_email')) {
-                    Mail::to(config('mail.admin_email'))->send(new NewBookingNotification($booking));
-                }
-            } catch (\Exception $e) {
-                Log::error('Failed to send booking emails: ' . $e->getMessage());
-            }
+            // Emails and SMS are automatically sent via BookingObserver
+            // when booking is created with status 'confirmed' and payment_status 'paid'
 
             // Clear session
             Session::forget('booking_data');
@@ -400,6 +394,9 @@ class PaymentController extends Controller
                 ]);
             }
         }
+
+        // Load relationships for email templates
+        $booking->load(['package', 'bookingAddons.addon']);
 
         return $booking;
     }
@@ -526,15 +523,17 @@ class PaymentController extends Controller
                 'final_paid_amount' => $pricing['final'],
             ]);
 
-            // Send delivery email
+            // Send delivery email or SMS
             try {
                 if ($giftCard->delivery_method === 'email' && $giftCard->recipient_email) {
                     Mail::to($giftCard->recipient_email)->send(new \App\Mail\GiftCardDelivery($giftCard));
                 } elseif ($giftCard->delivery_method === 'self' && $giftCard->sender_email) {
                     Mail::to($giftCard->sender_email)->send(new \App\Mail\GiftCardDelivery($giftCard));
+                } elseif ($giftCard->delivery_method === 'sms' && $giftCard->recipient_phone) {
+                    SmsService::sendGiftCardNotification($giftCard);
                 }
             } catch (\Exception $e) {
-                Log::error('Failed to send gift card email: ' . $e->getMessage());
+                Log::error('Failed to send gift card delivery notification: ' . $e->getMessage());
             }
 
             Session::forget('gift_card_data');
