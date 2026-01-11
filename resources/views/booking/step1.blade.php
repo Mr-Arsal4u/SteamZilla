@@ -6,34 +6,34 @@
 <div class="min-h-screen bg-white py-12">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Progress Indicator -->
-        <div class="mb-8">
-            <div class="flex items-center justify-center space-x-4">
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold">1</div>
-                    <span class="ml-2 text-sm font-semibold text-[#45A247]">Address</span>
+        <div class="mb-6 sm:mb-8">
+            <div class="flex items-center justify-center space-x-2 sm:space-x-4 overflow-x-auto pb-2">
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold text-xs sm:text-sm">1</div>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-[#45A247] hidden sm:inline">Address</span>
                 </div>
-                <div class="w-16 h-1 bg-gray-200"></div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold">2</div>
-                    <span class="ml-2 text-sm font-semibold text-gray-600">Order Info</span>
+                <div class="w-8 sm:w-16 h-1 bg-gray-200 flex-shrink-0"></div>
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-xs sm:text-sm">2</div>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-gray-600 hidden sm:inline">Order Info</span>
                 </div>
-                <div class="w-16 h-1 bg-gray-200"></div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold">3</div>
-                    <span class="ml-2 text-sm font-semibold text-gray-600">Date/Time</span>
+                <div class="w-8 sm:w-16 h-1 bg-gray-200 flex-shrink-0"></div>
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-xs sm:text-sm">3</div>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-gray-600 hidden sm:inline">Date/Time</span>
                 </div>
-                <div class="w-16 h-1 bg-gray-200"></div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold">4</div>
-                    <span class="ml-2 text-sm font-semibold text-gray-600">Payment</span>
+                <div class="w-8 sm:w-16 h-1 bg-gray-200 flex-shrink-0"></div>
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-xs sm:text-sm">4</div>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-gray-600 hidden sm:inline">Payment</span>
                 </div>
             </div>
         </div>
 
         <!-- Step 1 Content -->
-        <div class="bg-white rounded-lg shadow-lg p-8 md:p-12">
-            <h1 class="text-4xl font-bold text-gray-900 mb-2">New Order</h1>
-            <p class="text-xl text-gray-600 mb-8">Please provide an address for your car wash</p>
+        <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8 lg:p-12">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2">New Order</h1>
+            <p class="text-base sm:text-lg md:text-xl text-gray-600 mb-6 sm:mb-8">Please provide an address for your car wash</p>
 
             @if($errors->any())
                 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
@@ -103,11 +103,12 @@
                     </div>
 
                     <div>
-                        <label for="address" class="block text-lg font-semibold text-gray-900 mb-3">Additional Address Details (Optional)</label>
+                        <label for="address" class="block text-lg font-semibold text-gray-900 mb-3">Additional Address Details *</label>
                         <textarea 
                             id="address" 
                             name="address" 
                             rows="2"
+                            required
                             placeholder="Enter any additional address details (e.g., apartment number, building name)"
                             class="w-full px-6 py-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#45A247] focus:border-[#45A247] transition">{{ old('address', $bookingData['address'] ?? '') }}</textarea>
                     </div>

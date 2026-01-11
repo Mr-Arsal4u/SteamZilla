@@ -9,6 +9,8 @@ use App\Models\GiftCard;
 use App\Models\Country;
 use App\Models\City;
 use App\Models\Place;
+use App\Models\VehicleType;
+use App\Models\TimeSlot;
 use App\Mail\BookingConfirmation;
 use App\Mail\NewBookingNotification;
 use Illuminate\Http\Request;
@@ -60,7 +62,7 @@ class BookingController extends Controller
             'country_id' => 'required|exists:countries,id',
             'city_id' => 'required|exists:cities,id',
             'place_id' => 'required|exists:places,id',
-            'address' => 'nullable|string|max:500',
+            'address' => 'required|string|max:500',
         ]);
 
         if ($validator->fails()) {
@@ -70,11 +72,16 @@ class BookingController extends Controller
         }
 
         $place = Place::with(['city.country'])->findOrFail($request->place_id);
+        $city = City::with('country')->findOrFail($request->city_id);
+        $country = Country::findOrFail($request->country_id);
         
         $bookingData = Session::get('booking_data', []);
         $bookingData['country_id'] = $request->country_id;
+        $bookingData['country_name'] = $country->name;
         $bookingData['city_id'] = $request->city_id;
+        $bookingData['city_name'] = $city->name;
         $bookingData['place_id'] = $request->place_id;
+        $bookingData['place_name'] = $place->name;
         
         // Build address from place data
         $addressParts = [];
@@ -138,14 +145,18 @@ class BookingController extends Controller
 
         $packages = Package::where('is_active', true)->get();
         $addons = Addon::where('is_active', true)->get();
+        $vehicleTypes = VehicleType::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
         
-        return view('booking.step2', compact('packages', 'addons', 'bookingData'));
+        return view('booking.step2', compact('packages', 'addons', 'vehicleTypes', 'bookingData'));
     }
 
     public function step2Store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'vehicle_type' => 'required|string|max:255',
+            'vehicle_type_id' => 'required|exists:vehicle_types,id',
             'package_id' => 'required|exists:packages,id',
             'addons' => 'nullable|array',
             'addons.*' => 'exists:addons,id',
@@ -179,8 +190,11 @@ class BookingController extends Controller
             }
         }
 
+        $vehicleType = VehicleType::findOrFail($request->vehicle_type_id);
+        
         $bookingData = Session::get('booking_data', []);
-        $bookingData['vehicle_type'] = $request->vehicle_type;
+        $bookingData['vehicle_type_id'] = $request->vehicle_type_id;
+        $bookingData['vehicle_type'] = $vehicleType->name;
         $bookingData['package_id'] = $request->package_id;
         $bookingData['package_name'] = $package->name;
         $bookingData['package_price'] = $package->price;
@@ -201,14 +215,18 @@ class BookingController extends Controller
                 ->with('error', 'Please select a service package first.');
         }
 
-        // Generate available time slots (8 AM to 6 PM, hourly)
-        $timeSlots = [];
-        for ($hour = 8; $hour <= 18; $hour++) {
-            $timeSlots[] = [
-                'value' => str_pad($hour, 2, '0', STR_PAD_LEFT) . ':00',
-                'label' => date('g:i A', mktime($hour, 0, 0)),
-            ];
-        }
+        // Get available time slots from database
+        $timeSlots = TimeSlot::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('start_time')
+            ->get()
+            ->map(function ($slot) {
+                return [
+                    'value' => $slot->time_value,
+                    'label' => $slot->formatted_time,
+                ];
+            })
+            ->toArray();
 
         return view('booking.step3', compact('timeSlots', 'bookingData'));
     }
@@ -264,53 +282,25 @@ class BookingController extends Controller
 
         $bookingData = Session::get('booking_data', []);
         
-        // Create booking
-        $booking = Booking::create([
-            'user_name' => $request->user_name,
-            'user_email' => $request->user_email,
-            'user_phone' => $request->user_phone,
-            'address' => $bookingData['address'],
-            'latitude' => $bookingData['latitude'] ?? null,
-            'longitude' => $bookingData['longitude'] ?? null,
-            'place_id' => $bookingData['place_id'] ?? null,
-            'vehicle_type' => $bookingData['vehicle_type'],
-            'booking_date' => $bookingData['booking_date'],
-            'booking_time' => $bookingData['booking_time'],
-            'package_id' => $bookingData['package_id'],
-            'status' => 'pending',
-            'notes' => $request->notes,
-            'total_price' => $bookingData['total_price'],
-            'payment_method' => null, // Payment will be collected by employee
-            'gift_card_id' => null,
-            'gift_card_discount' => 0,
-        ]);
-
-        // Attach addons
-        if (!empty($bookingData['addons'])) {
-            foreach ($bookingData['addons'] as $addonData) {
-                $booking->bookingAddons()->create([
-                    'addon_id' => $addonData['id'],
-                    'quantity' => $addonData['quantity'],
-                    'price_at_booking' => $addonData['price'],
-                ]);
-            }
+        // Validate that we have the required booking data from previous steps
+        if (empty($bookingData) || 
+            !isset($bookingData['address']) || 
+            !isset($bookingData['package_id']) || 
+            !isset($bookingData['total_price'])) {
+            return redirect()->route('booking.step1')
+                ->with('error', 'Your booking session expired. Please start over.');
         }
+        
+        // Store user info in session for payment processing
+        $bookingData['user_name'] = $request->user_name;
+        $bookingData['user_email'] = $request->user_email;
+        $bookingData['user_phone'] = $request->user_phone;
+        $bookingData['notes'] = $request->notes;
+        $bookingData['payment_method'] = 'square'; // Always use Square payment
+        Session::put('booking_data', $bookingData);
 
-        // Send email notifications
-        try {
-            Mail::to($booking->user_email)->send(new BookingConfirmation($booking));
-            if (config('mail.admin_email')) {
-                Mail::to(config('mail.admin_email'))->send(new NewBookingNotification($booking));
-            }
-        } catch (\Exception $e) {
-            Log::error('Failed to send booking emails: ' . $e->getMessage());
-        }
-
-        // Clear session
-        Session::forget('booking_data');
-
-        return redirect()->route('booking.success', $booking->id)
-            ->with('success', 'Your booking has been confirmed! Our employee will contact you for payment.');
+        // Redirect to Square payment page
+        return redirect()->route('booking.payment');
     }
 
     // Legacy methods for backward compatibility

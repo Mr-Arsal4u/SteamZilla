@@ -17,6 +17,7 @@ Route::get('/about', [AboutController::class, 'index'])->name('about');
 Route::get('/pricing', [PackageController::class, 'index'])->name('pricing');
 Route::get('/gift-cards', [GiftCardController::class, 'index'])->name('gift-cards');
 Route::post('/gift-cards/buy', [GiftCardController::class, 'buy'])->name('gift-cards.buy');
+Route::get('/gift-cards/payment', [GiftCardController::class, 'showPaymentPage'])->name('gift-cards.payment');
 Route::post('/gift-cards/check-balance', [GiftCardController::class, 'checkBalance'])->name('gift-cards.check-balance');
 Route::post('/gift-cards/check-reload', [GiftCardController::class, 'checkReloadCard'])->name('gift-cards.check-reload');
 Route::post('/gift-cards/reload', [GiftCardController::class, 'reload'])->name('gift-cards.reload');
@@ -46,6 +47,11 @@ Route::post('/booking/step3', [BookingController::class, 'step3Store'])->name('b
 Route::get('/booking/step4', [BookingController::class, 'step4'])->name('booking.step4');
 Route::post('/booking/step4', [BookingController::class, 'step4Store'])->name('booking.step4.store');
 Route::get('/booking/success/{id}', [BookingController::class, 'success'])->name('booking.success');
+
+// Booking Payment Routes (public - part of booking flow)
+Route::get('/booking/payment', [PaymentController::class, 'showPaymentPage'])->name('booking.payment');
+Route::post('/process-payment', [PaymentController::class, 'processPayment'])->name('payment.process');
+Route::get('/booking/cancel', [PaymentController::class, 'cancel'])->name('booking.cancel');
 
 // Admin Authentication Routes
 Route::get('/admin/login', [AuthController::class, 'showLogin'])->name('admin.login');
@@ -127,10 +133,37 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::post('/places/{id}', [AdminController::class, 'updatePlace'])->name('places.update');
     Route::delete('/places/{id}', [AdminController::class, 'deletePlace'])->name('places.delete');
 
+    // Vehicle Types Management
+    Route::get('/vehicle-types', [AdminController::class, 'vehicleTypes'])->name('vehicle-types');
+    Route::get('/vehicle-types/create', [AdminController::class, 'createVehicleType'])->name('vehicle-types.create');
+    Route::post('/vehicle-types', [AdminController::class, 'storeVehicleType'])->name('vehicle-types.store');
+    Route::get('/vehicle-types/{id}/edit', [AdminController::class, 'editVehicleType'])->name('vehicle-types.edit');
+    Route::post('/vehicle-types/{id}', [AdminController::class, 'updateVehicleType'])->name('vehicle-types.update');
+    Route::delete('/vehicle-types/{id}', [AdminController::class, 'deleteVehicleType'])->name('vehicle-types.delete');
+
+    // Time Slots Management
+    Route::get('/time-slots', [AdminController::class, 'timeSlots'])->name('time-slots');
+    Route::get('/time-slots/create', [AdminController::class, 'createTimeSlot'])->name('time-slots.create');
+    Route::post('/time-slots', [AdminController::class, 'storeTimeSlot'])->name('time-slots.store');
+    Route::get('/time-slots/{id}/edit', [AdminController::class, 'editTimeSlot'])->name('time-slots.edit');
+    Route::post('/time-slots/{id}', [AdminController::class, 'updateTimeSlot'])->name('time-slots.update');
+    Route::delete('/time-slots/{id}', [AdminController::class, 'deleteTimeSlot'])->name('time-slots.delete');
+
+    // Social Links Management
+    Route::get('/social-links', [AdminController::class, 'socialLinks'])->name('social-links');
+    Route::get('/social-links/create', [AdminController::class, 'createSocialLink'])->name('social-links.create');
+    Route::post('/social-links', [AdminController::class, 'storeSocialLink'])->name('social-links.store');
+    Route::get('/social-links/{id}/edit', [AdminController::class, 'editSocialLink'])->name('social-links.edit');
+    Route::post('/social-links/{id}', [AdminController::class, 'updateSocialLink'])->name('social-links.update');
+    Route::delete('/social-links/{id}', [AdminController::class, 'deleteSocialLink'])->name('social-links.delete');
+
     // Admin routes (optional)
     Route::post('/refund/{id}', [PaymentController::class, 'refundPayment'])->name('payment.refund');
     Route::get('/verify-payment/{id}', [PaymentController::class, 'verifyPayment'])->name('payment.verify');
 });
+
+// Square Webhook (no auth required)
+Route::post('/webhooks/square', [PaymentController::class, 'handleWebhook'])->name('webhooks.square');
 
 // User Protected Routes
 Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
@@ -143,8 +176,5 @@ Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
     Route::post('/contact', [UserController::class, 'submitContact'])->name('contact.submit');
     Route::get('/activity', [UserController::class, 'activity'])->name('activity');
 
-    Route::get('/booking/payment', [PaymentController::class, 'showPaymentPage'])->name('booking.payment');
-    Route::post('/process-payment', [PaymentController::class, 'processPayment'])->name('payment.process');
-    Route::get('/booking/success/{id}', [PaymentController::class, 'success'])->name('booking.success');
-    Route::get('/booking/cancel', [PaymentController::class, 'cancel'])->name('booking.cancel');
+    Route::post('/process-gift-card-payment', [PaymentController::class, 'processGiftCardPayment'])->name('payment.gift-card.process');
 });

@@ -6,35 +6,35 @@
 <div class="min-h-screen bg-white py-12">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Progress Indicator -->
-        <div class="mb-8">
-            <div class="flex items-center justify-center space-x-4">
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold">
-                        <i class="fas fa-check text-sm"></i>
+        <div class="mb-6 sm:mb-8">
+            <div class="flex items-center justify-center space-x-2 sm:space-x-4 overflow-x-auto pb-2">
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold text-xs sm:text-sm">
+                        <i class="fas fa-check text-xs sm:text-sm"></i>
                     </div>
-                    <span class="ml-2 text-sm font-semibold text-[#45A247]">Address</span>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-[#45A247] hidden sm:inline">Address</span>
                 </div>
-                <div class="w-16 h-1 bg-[#45A247]"></div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold">2</div>
-                    <span class="ml-2 text-sm font-semibold text-[#45A247]">Order Info</span>
+                <div class="w-8 sm:w-16 h-1 bg-[#45A247] flex-shrink-0"></div>
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold text-xs sm:text-sm">2</div>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-[#45A247] hidden sm:inline">Order Info</span>
                 </div>
-                <div class="w-16 h-1 bg-gray-200"></div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold">3</div>
-                    <span class="ml-2 text-sm font-semibold text-gray-600">Date/Time</span>
+                <div class="w-8 sm:w-16 h-1 bg-gray-200 flex-shrink-0"></div>
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-xs sm:text-sm">3</div>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-gray-600 hidden sm:inline">Date/Time</span>
                 </div>
-                <div class="w-16 h-1 bg-gray-200"></div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold">4</div>
-                    <span class="ml-2 text-sm font-semibold text-gray-600">Payment</span>
+                <div class="w-8 sm:w-16 h-1 bg-gray-200 flex-shrink-0"></div>
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center font-bold text-xs sm:text-sm">4</div>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-gray-600 hidden sm:inline">Payment</span>
                 </div>
             </div>
         </div>
 
         <!-- Step 2 Content -->
-        <div class="bg-white rounded-lg shadow-lg p-8 md:p-12">
-            <h2 class="text-3xl font-bold text-gray-900 mb-8">Order Info</h2>
+        <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8 lg:p-12">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Order Info</h2>
 
             @if($errors->any())
                 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
@@ -52,28 +52,30 @@
                 <!-- Vehicle Type Selection -->
                 <div class="mb-10">
                     <label class="block text-lg font-semibold text-gray-900 mb-4">Vehicle Type *</label>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        @php
-                            $vehicleTypes = ['Sedan', 'SUV', 'Truck', 'Van', 'Coupe', 'Convertible', 'Hatchback', 'Other'];
-                        @endphp
-                        @foreach($vehicleTypes as $type)
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
+                        @forelse($vehicleTypes as $vehicleType)
                             <label class="vehicle-type-card cursor-pointer">
-                                <input type="radio" name="vehicle_type" value="{{ $type }}" 
-                                    {{ old('vehicle_type', $bookingData['vehicle_type'] ?? '') === $type ? 'checked' : '' }}
+                                <input type="radio" name="vehicle_type_id" value="{{ $vehicleType->id }}" 
+                                    {{ old('vehicle_type_id', $bookingData['vehicle_type_id'] ?? '') == $vehicleType->id ? 'checked' : '' }}
                                     required class="hidden" onchange="updateTotal()">
-                                <div class="border-2 border-gray-300 rounded-lg p-4 text-center hover:border-[#45A247] transition">
-                                    <i class="fas fa-car text-3xl text-gray-400 mb-2"></i>
-                                    <div class="font-semibold text-gray-900">{{ $type }}</div>
+                                <div class="border-2 border-gray-300 rounded-lg p-3 sm:p-4 text-center hover:border-[#45A247] transition">
+                                    <i class="fas fa-car text-2xl sm:text-3xl text-gray-400 mb-2"></i>
+                                    <div class="font-semibold text-gray-900 text-sm sm:text-base">{{ $vehicleType->name }}</div>
+                                    @if($vehicleType->description)
+                                        <div class="text-xs text-gray-500 mt-1">{{ Str::limit($vehicleType->description, 30) }}</div>
+                                    @endif
                                 </div>
                             </label>
-                        @endforeach
+                        @empty
+                            <div class="col-span-full text-center text-gray-500 py-4">No vehicle types available. Please contact support.</div>
+                        @endforelse
                     </div>
                 </div>
 
                 <!-- Service Packages -->
                 <div class="mb-10">
                     <label class="block text-lg font-semibold text-gray-900 mb-4">Select Service Package *</label>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
                         @foreach($packages as $package)
                             <label class="package-card cursor-pointer">
                                 <input type="radio" name="package_id" value="{{ $package->id }}" 
@@ -95,7 +97,7 @@
                 <!-- Add-Ons -->
                 <div class="mb-10">
                     <label class="block text-lg font-semibold text-gray-900 mb-4">Add-On Services (Optional)</label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         @foreach($addons as $addon)
                             <label class="addon-card cursor-pointer">
                                 <input type="checkbox" name="addons[]" value="{{ $addon->id }}" 

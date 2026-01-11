@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Booking;
+use App\Observers\BookingObserver;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +21,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register Booking Observer to send emails/SMS automatically
+        // Note: Observer only triggers for paid/confirmed bookings to avoid duplicates
+        Booking::observe(BookingObserver::class);
     }
 }

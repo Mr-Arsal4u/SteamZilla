@@ -25,6 +25,9 @@ class GiftCard extends Model
         'message',
         'status',
         'expires_at',
+        'square_payment_id',
+        'square_receipt_url',
+        'payment_status',
     ];
 
     protected $casts = [

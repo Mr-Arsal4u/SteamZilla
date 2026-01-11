@@ -6,41 +6,41 @@
 <div class="min-h-screen bg-white py-12">
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Progress Indicator -->
-        <div class="mb-8">
-            <div class="flex items-center justify-center space-x-4">
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold">
-                        <i class="fas fa-check text-sm"></i>
+        <div class="mb-6 sm:mb-8">
+            <div class="flex items-center justify-center space-x-2 sm:space-x-4 overflow-x-auto pb-2">
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold text-xs sm:text-sm">
+                        <i class="fas fa-check text-xs sm:text-sm"></i>
                     </div>
-                    <span class="ml-2 text-sm font-semibold text-[#45A247]">Address</span>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-[#45A247] hidden sm:inline">Address</span>
                 </div>
-                <div class="w-16 h-1 bg-[#45A247]"></div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold">
-                        <i class="fas fa-check text-sm"></i>
+                <div class="w-8 sm:w-16 h-1 bg-[#45A247] flex-shrink-0"></div>
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold text-xs sm:text-sm">
+                        <i class="fas fa-check text-xs sm:text-sm"></i>
                     </div>
-                    <span class="ml-2 text-sm font-semibold text-[#45A247]">Order Info</span>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-[#45A247] hidden sm:inline">Order Info</span>
                 </div>
-                <div class="w-16 h-1 bg-[#45A247]"></div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold">
-                        <i class="fas fa-check text-sm"></i>
+                <div class="w-8 sm:w-16 h-1 bg-[#45A247] flex-shrink-0"></div>
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold text-xs sm:text-sm">
+                        <i class="fas fa-check text-xs sm:text-sm"></i>
                     </div>
-                    <span class="ml-2 text-sm font-semibold text-[#45A247]">Date/Time</span>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-[#45A247] hidden sm:inline">Date/Time</span>
                 </div>
-                <div class="w-16 h-1 bg-[#45A247]"></div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold">4</div>
-                    <span class="ml-2 text-sm font-semibold text-[#45A247]">Confirm</span>
+                <div class="w-8 sm:w-16 h-1 bg-[#45A247] flex-shrink-0"></div>
+                <div class="flex items-center flex-shrink-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#45A247] text-white flex items-center justify-center font-bold text-xs sm:text-sm">4</div>
+                    <span class="ml-1 sm:ml-2 text-xs sm:text-sm font-semibold text-[#45A247] hidden sm:inline">Confirm</span>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             <!-- Contact Information Form -->
             <div class="lg:col-span-2">
-                <div class="bg-white rounded-lg shadow-lg p-8 md:p-12">
-                    <h2 class="text-3xl font-bold text-gray-900 mb-8">Contact Information</h2>
+                <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8 lg:p-12">
+                    <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Contact Information</h2>
 
                     @if($errors->any())
                         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
@@ -76,15 +76,15 @@
                             </div>
                         </div>
 
-                        <!-- Payment Notice -->
-                        <div class="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-8">
-                            <div class="flex items-start">
-                                <i class="fas fa-info-circle text-blue-600 text-2xl mr-4 mt-1"></i>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Payment Information</h3>
-                                    <p class="text-gray-700 leading-relaxed">
-                                        <strong>Our employee will contact you for the payment</strong> after confirming your booking. You can pay via cash, card, or other accepted payment methods when our team arrives for the service.
-                                    </p>
+                        <!-- Payment Information -->
+                        <div class="mb-8">
+                            <div class="bg-green-50 border-2 border-[#45A247] rounded-lg p-4">
+                                <div class="flex items-center">
+                                    <i class="fas fa-credit-card text-[#45A247] text-xl mr-3"></i>
+                                    <div>
+                                        <p class="text-sm font-semibold text-gray-900">Payment via Square</p>
+                                        <p class="text-sm text-gray-600 mt-1">You will be redirected to complete secure payment</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -171,14 +171,14 @@
                         </div>
                     </div>
                     
-                    <div class="border-t-2 border-[#45A247] pt-4">
+                        <div class="border-t-2 border-[#45A247] pt-4">
                         <div class="flex justify-between items-center">
                             <span class="text-lg font-semibold text-gray-900">Total:</span>
                             <span class="text-2xl font-bold text-[#45A247]">
                                 ${{ number_format($bookingData['total_price'] ?? 0, 2) }}
                             </span>
                         </div>
-                        <p class="text-xs text-gray-600 mt-2 text-center">Payment collected on service day</p>
+                        <p class="text-xs text-gray-600 mt-2 text-center">Payment via Square</p>
                     </div>
                 </div>
             </div>

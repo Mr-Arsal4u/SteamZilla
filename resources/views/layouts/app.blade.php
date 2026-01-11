@@ -61,41 +61,41 @@
     <!-- Navigation -->
     <nav class="bg-white shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+            <div class="flex justify-between items-center h-14 sm:h-16">
                 <div class="flex items-center">
                     <a href="{{ route('home') }}" class="flex items-center">
                         @if($siteLogo)
-                            <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ $siteName }}" class="h-28 w-auto mr-4">
+                            <img src="{{ asset('storage/' . $siteLogo) }}" alt="{{ $siteName }}" class="h-16 sm:h-20 lg:h-28 w-auto mr-2 sm:mr-4">
                         @endif
-                        <span class="text-2xl font-bold" style="color: #45A247;">{{ $siteName }}</span>
+                        <span class="text-lg sm:text-xl lg:text-2xl font-bold" style="color: #45A247;">{{ $siteName }}</span>
                     </a>
                 </div>
-                <div class="hidden md:flex items-center space-x-8">
+                <div class="hidden md:flex items-center space-x-4 lg:space-x-8">
                     <a href="{{ route('home') }}" class="text-gray-700 transition hover:[color:#45A247]">Home</a>
                     <a href="{{ route('about') }}" class="text-gray-700 transition hover:[color:#45A247]">About</a>
                     <a href="{{ route('pricing') }}" class="text-gray-700 transition hover:[color:#45A247]">Pricing</a>
                     {{-- <a href="{{ route('gift-cards') }}" class="text-gray-700 transition hover:[color:#45A247]">Gift Cards</a> --}}
                     <a href="{{ route('contact') }}" class="text-gray-700 transition hover:[color:#45A247]">Contact Us</a>
-                    <a href="{{ route('order-now') }}" class="text-white px-6 py-2 rounded-full hover:opacity-90 transition" style="background-color: #45A247;">Order Now</a>
+                    <a href="{{ route('order-now') }}" class="text-white px-4 lg:px-6 py-2 rounded-full hover:opacity-90 transition text-sm lg:text-base" style="background-color: #45A247;">Order Now</a>
                     @auth
                         @if(Auth::user()->isAdmin())
-                            <a href="{{ route('admin.dashboard') }}" class="text-gray-700 transition hover:[color:#45A247]">Admin</a>
+                            <a href="{{ route('admin.dashboard') }}" class="text-gray-700 transition hover:[color:#45A247] text-sm lg:text-base">Admin</a>
                         @else
-                            <a href="{{ route('user.dashboard') }}" class="text-gray-700 transition hover:[color:#45A247]">My Account</a>
+                            <a href="{{ route('user.dashboard') }}" class="text-gray-700 transition hover:[color:#45A247] text-sm lg:text-base">My Account</a>
                         @endif
                         <form action="{{ route('logout') }}" method="POST" class="inline">
                             @csrf
-                            <button type="submit" class="text-gray-700 transition hover:[color:#45A247]">Logout</button>
+                            <button type="submit" class="text-gray-700 transition hover:[color:#45A247] text-sm lg:text-base">Logout</button>
                         </form>
                     @else
-                        <a href="{{ route('user.login') }}" class="text-gray-700 transition hover:[color:#45A247]">Login</a>
-                        <a href="{{ route('user.register') }}" class="text-white px-4 py-2 rounded-full hover:opacity-90 transition" style="background-color: #45A247;">Sign Up</a>
+                        <a href="{{ route('user.login') }}" class="text-gray-700 transition hover:[color:#45A247] text-sm lg:text-base">Login</a>
+                        <a href="{{ route('user.register') }}" class="text-white px-4 py-2 rounded-full hover:opacity-90 transition text-sm lg:text-base" style="background-color: #45A247;">Sign Up</a>
                     @endauth
                 </div>
                 <!-- Mobile menu button -->
                 <div class="md:hidden">
                     <button type="button" class="text-gray-700" id="mobile-menu-button">
-                        <i class="fas fa-bars text-2xl"></i>
+                        <i class="fas fa-bars text-xl sm:text-2xl"></i>
                     </button>
                 </div>
             </div>
@@ -155,10 +155,10 @@
                 $contactEmail = \App\Models\Setting::get('contact_email', 'mrzilla89@thesteamzilla.com');
                 $contactPhone = \App\Models\Setting::get('contact_phone', '(413) 352-9444');
             @endphp
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
                 <div>
-                    <h3 class="text-xl font-bold mb-4" style="color: #45A247;">{{ $siteName }}</h3>
-                    <p class="text-gray-400">{{ $siteDescription }}</p>
+                    <h3 class="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style="color: #45A247;">{{ $siteName }}</h3>
+                    <p class="text-sm sm:text-base text-gray-400">{{ $siteDescription }}</p>
                 </div>
                 <div>
                     <h4 class="font-semibold mb-4 text-white">Quick Links</h4>
@@ -185,9 +185,21 @@
                 <div>
                     <h4 class="font-semibold mb-4 text-white">Follow Us</h4>
                     <div class="flex space-x-4">
-                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-facebook text-2xl"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-instagram text-2xl"></i></a>
-                        <a href="#" class="text-gray-400 hover:text-white transition"><i class="fab fa-twitter text-2xl"></i></a>
+                        @php
+                            $socialLinks = \App\Models\SocialLink::where('is_active', true)
+                                ->orderBy('sort_order')
+                                ->orderBy('platform')
+                                ->get();
+                        @endphp
+                        @forelse($socialLinks as $socialLink)
+                            <a href="{{ $socialLink->url }}" target="_blank" rel="noopener noreferrer" 
+                               class="text-gray-400 hover:text-white transition" 
+                               title="{{ $socialLink->platform }}">
+                                <i class="{{ $socialLink->icon }} text-2xl"></i>
+                            </a>
+                        @empty
+                            <p class="text-gray-400 text-sm">No social links available</p>
+                        @endforelse
                     </div>
                 </div>
             </div>
