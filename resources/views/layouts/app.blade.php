@@ -5,16 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php
-        $seoTitle = \App\Models\Setting::get('seo_meta_title', 'SteamZilla - Professional Car Steam Cleaning');
-        $seoDescription = \App\Models\Setting::get('seo_meta_description', 'Professional mobile car steam cleaning services. Eco-friendly, water-saving, and convenient. Book your service today!');
-        $seoKeywords = \App\Models\Setting::get('seo_meta_keywords', 'car cleaning, steam cleaning, mobile detailing');
-        $seoOgImage = \App\Models\Setting::get('seo_og_image');
+        $currentUrl = url()->current();
+        
+        // Default values
+        $seoTitle = 'TheSteamZilla - Professional Mobile Car Steam Detailing & Cleaning';
+        $seoDescription = 'TheSteamZilla offers eco-friendly mobile car steam detailing services. Professional interior, exterior, and engine bay steam cleaning that eliminates 99.9% of germs and bacteria.';
+        $seoKeywords = 'steam car wash, mobile car detailing, steam cleaning, car interior cleaning, engine bay cleaning, eco-friendly car wash, TheSteamZilla';
+        $seoOgImage = null;
+
+        try {
+            if (class_exists(\App\Models\Setting::class)) {
+                $seoTitle = \App\Models\Setting::get('seo_meta_title', $seoTitle);
+                $seoDescription = \App\Models\Setting::get('seo_meta_description', $seoDescription);
+                $seoKeywords = \App\Models\Setting::get('seo_meta_keywords', $seoKeywords);
+                $seoOgImage = \App\Models\Setting::get('seo_og_image');
+            }
+        } catch (\Throwable $e) {
+            // If settings table/model fails, we silently fall back to defaults
+            // Report error to log if needed: \Log::warning('SEO Settings load failed: ' . $e->getMessage());
+        }
     @endphp
     <title>@yield('title', $seoTitle)</title>
     <meta name="description" content="@yield('description', $seoDescription)">
     <meta name="keywords" content="{{ $seoKeywords }}">
+    <link rel="canonical" href="{{ $currentUrl }}" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="{{ $currentUrl }}" />
+    <meta property="og:title" content="@yield('title', $seoTitle)" />
+    <meta property="og:description" content="@yield('description', $seoDescription)" />
     @if($seoOgImage)
         <meta property="og:image" content="{{ asset('storage/' . $seoOgImage) }}">
+    @endif
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="{{ $currentUrl }}" />
+    <meta name="twitter:title" content="@yield('title', $seoTitle)" />
+    <meta name="twitter:description" content="@yield('description', $seoDescription)" />
+    @if($seoOgImage)
+        <meta name="twitter:image" content="{{ asset('storage/' . $seoOgImage) }}">
     @endif
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
