@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'SteamZilla Mobile Detailing - The Power of Clean, Unleashed')
+@section('title', 'Car Steam Wash & Car Steam Clean USA | TheSteamZilla')
 
 @section('content')
 @php
