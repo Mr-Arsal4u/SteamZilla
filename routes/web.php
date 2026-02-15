@@ -10,6 +10,7 @@ use App\Http\Controllers\BookingController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\GiftCardController;
+use App\Http\Controllers\BlogController;
 
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
@@ -52,6 +53,10 @@ Route::get('/booking/success/{id}', [BookingController::class, 'success'])->name
 Route::get('/booking/payment', [PaymentController::class, 'showPaymentPage'])->name('booking.payment');
 Route::post('/process-payment', [PaymentController::class, 'processPayment'])->name('payment.process');
 Route::get('/booking/cancel', [PaymentController::class, 'cancel'])->name('booking.cancel');
+
+// Blog Public Routes
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
 // Admin Authentication Routes
 Route::get('/admin/login', [AuthController::class, 'showLogin'])->name('admin.login');
@@ -156,6 +161,22 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::get('/social-links/{id}/edit', [AdminController::class, 'editSocialLink'])->name('social-links.edit');
     Route::post('/social-links/{id}', [AdminController::class, 'updateSocialLink'])->name('social-links.update');
     Route::delete('/social-links/{id}', [AdminController::class, 'deleteSocialLink'])->name('social-links.delete');
+
+    // Blog Categories Management
+    Route::get('/blog-categories', [AdminController::class, 'blogCategories'])->name('blog-categories');
+    Route::get('/blog-categories/create', [AdminController::class, 'createBlogCategory'])->name('blog-categories.create');
+    Route::post('/blog-categories', [AdminController::class, 'storeBlogCategory'])->name('blog-categories.store');
+    Route::get('/blog-categories/{id}/edit', [AdminController::class, 'editBlogCategory'])->name('blog-categories.edit');
+    Route::post('/blog-categories/{id}', [AdminController::class, 'updateBlogCategory'])->name('blog-categories.update');
+    Route::delete('/blog-categories/{id}', [AdminController::class, 'deleteBlogCategory'])->name('blog-categories.delete');
+
+    // Blog Posts Management
+    Route::get('/blogs', [AdminController::class, 'blogs'])->name('blogs');
+    Route::get('/blogs/create', [AdminController::class, 'createBlog'])->name('blogs.create');
+    Route::post('/blogs', [AdminController::class, 'storeBlog'])->name('blogs.store');
+    Route::get('/blogs/{id}/edit', [AdminController::class, 'editBlog'])->name('blogs.edit');
+    Route::post('/blogs/{id}', [AdminController::class, 'updateBlog'])->name('blogs.update');
+    Route::delete('/blogs/{id}', [AdminController::class, 'deleteBlog'])->name('blogs.delete');
 
     // Admin routes (optional)
     Route::post('/refund/{id}', [PaymentController::class, 'refundPayment'])->name('payment.refund');

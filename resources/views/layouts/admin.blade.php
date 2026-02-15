@@ -66,6 +66,12 @@
                 <a href="{{ route('admin.pages.content', 'home') }}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.pages*') ? 'bg-gray-800 text-white border-r-4 border-[#45A247]' : '' }}">
                     <i class="fas fa-file-alt w-5 mr-3"></i> Page Content
                 </a>
+                <a href="{{ route('admin.blog-categories') }}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.blog-categories*') ? 'bg-gray-800 text-white border-r-4 border-[#45A247]' : '' }}">
+                    <i class="fas fa-tags w-5 mr-3"></i> Blog Categories
+                </a>
+                <a href="{{ route('admin.blogs') }}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.blogs*') ? 'bg-gray-800 text-white border-r-4 border-[#45A247]' : '' }}">
+                    <i class="fas fa-blog w-5 mr-3"></i> Blog Posts
+                </a>
                 <a href="{{ route('admin.contact-submissions') }}" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white {{ request()->routeIs('admin.contact-submissions*') ? 'bg-gray-800 text-white border-r-4 border-[#45A247]' : '' }}">
                     <i class="fas fa-envelope w-5 mr-3"></i> Contact Queries
                     @php
@@ -171,4 +177,3 @@
     </script>
 </body>
 </html>
-

@@ -6,7 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @php
         $currentUrl = url()->current();
-        
+
         // Default values
         $seoTitle = 'TheSteamZilla - Professional Mobile Car Steam Detailing & Cleaning';
         $seoDescription = 'TheSteamZilla offers eco-friendly mobile car steam detailing services. Professional interior, exterior, and engine bay steam cleaning that eliminates 99.9% of germs and bacteria.';
@@ -47,9 +47,9 @@
     @if($seoOgImage)
         <meta name="twitter:image" content="{{ asset('storage/' . $seoOgImage) }}">
     @endif
-    
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
+
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -59,7 +59,7 @@
         $siteLogo = \App\Models\Setting::get('site_logo');
     @endphp
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
+    <nav class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-14 sm:h-16">
                 <div class="flex items-center">
@@ -70,10 +70,11 @@
                         <span class="text-lg sm:text-xl lg:text-2xl font-bold" style="color: #45A247;">{{ $siteName }}</span>
                     </a>
                 </div>
-                <div class="hidden md:flex items-center space-x-4 lg:space-x-8">
+                <div class="hidden md:flex items-center space-x-3 lg:space-x-5">
                     <a href="{{ route('home') }}" class="text-gray-700 transition hover:[color:#45A247]">Home</a>
                     <a href="{{ route('about') }}" class="text-gray-700 transition hover:[color:#45A247]">About</a>
                     <a href="{{ route('pricing') }}" class="text-gray-700 transition hover:[color:#45A247]">Pricing</a>
+                    <a href="{{ route('blog.index') }}" class="text-gray-700 transition hover:[color:#45A247]">Blog</a>
                     {{-- <a href="{{ route('gift-cards') }}" class="text-gray-700 transition hover:[color:#45A247]">Gift Cards</a> --}}
                     <a href="{{ route('contact') }}" class="text-gray-700 transition hover:[color:#45A247]">Contact Us</a>
                     <a href="{{ route('order-now') }}" class="text-white px-4 lg:px-6 py-2 rounded-full hover:opacity-90 transition text-sm lg:text-base" style="background-color: #45A247;">Order Now</a>
@@ -89,7 +90,7 @@
                         </form>
                     @else
                         <a href="{{ route('user.login') }}" class="text-gray-700 transition hover:[color:#45A247] text-sm lg:text-base">Login</a>
-                        <a href="{{ route('user.register') }}" class="text-white px-4 py-2 rounded-full hover:opacity-90 transition text-sm lg:text-base" style="background-color: #45A247;">Sign Up</a>
+                        <a href="{{ route('user.register') }}" class="text-white px-4 py-2 rounded-full hover:opacity-95 transition text-sm lg:text-base shadow-sm bg-gradient-to-r from-[#2f7031] to-[#45A247]">Sign Up</a>
                     @endauth
                 </div>
                 <!-- Mobile menu button -->
@@ -106,9 +107,10 @@
                 <a href="{{ route('home') }}" class="block px-3 py-2 text-gray-700 hover:bg-green-50 rounded">Home</a>
                 <a href="{{ route('about') }}" class="block px-3 py-2 text-gray-700 hover:bg-green-50 rounded">About</a>
                 <a href="{{ route('pricing') }}" class="block px-3 py-2 text-gray-700 hover:bg-green-50 rounded">Pricing</a>
+                <a href="{{ route('blog.index') }}" class="block px-3 py-2 text-gray-700 hover:bg-green-50 rounded">Blog</a>
                 {{-- <a href="{{ route('gift-cards') }}" class="block px-3 py-2 text-gray-700 hover:bg-green-50 rounded">Gift Cards</a> --}}
                 <a href="{{ route('contact') }}" class="block px-3 py-2 text-gray-700 hover:bg-green-50 rounded">Contact Us</a>
-                <a href="{{ route('order-now') }}" class="block px-3 py-2 bg-green-600 text-white rounded">Order Now</a>
+                <a href="{{ route('order-now') }}" class="block px-3 py-2 text-white rounded" style="background-color: #45A247;">Order Now</a>
                 @auth
                     @if(Auth::user()->isAdmin())
                         <a href="{{ route('admin.dashboard') }}" class="block px-3 py-2 text-gray-700 hover:bg-green-50 rounded">Admin</a>
@@ -166,6 +168,7 @@
                         <li><a href="{{ route('home') }}" class="hover:text-white transition">Home</a></li>
                         <li><a href="{{ route('about') }}" class="hover:text-white transition">About</a></li>
                         <li><a href="{{ route('pricing') }}" class="hover:text-white transition">Pricing</a></li>
+                        <li><a href="{{ route('blog.index') }}" class="hover:text-white transition">Blog</a></li>
                         <li><a href="{{ route('order-now') }}" class="hover:text-white transition">Order Now</a></li>
                         <li><a href="{{ route('admin.login') }}" class="hover:text-white transition">Login</a></li>
                     </ul>
@@ -192,8 +195,8 @@
                                 ->get();
                         @endphp
                         @forelse($socialLinks as $socialLink)
-                            <a href="{{ $socialLink->url }}" target="_blank" rel="noopener noreferrer" 
-                               class="text-gray-400 hover:text-white transition" 
+                            <a href="{{ $socialLink->url }}" target="_blank" rel="noopener noreferrer"
+                               class="text-gray-400 hover:text-white transition"
                                title="{{ $socialLink->platform }}">
                                 <i class="{{ $socialLink->icon }} text-2xl"></i>
                             </a>

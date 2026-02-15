@@ -17,6 +17,8 @@ use App\Models\Place;
 use App\Models\VehicleType;
 use App\Models\TimeSlot;
 use App\Models\SocialLink;
+use App\Models\BlogCategory;
+use App\Models\BlogPost;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
@@ -976,5 +978,231 @@ class AdminController extends Controller
         $socialLink = SocialLink::findOrFail($id);
         $socialLink->delete();
         return redirect()->route('admin.social-links')->with('success', 'Social link deleted successfully.');
+    }
+
+    // ==================== BLOG CATEGORIES MANAGEMENT ====================
+    public function blogCategories()
+    {
+        $categories = BlogCategory::orderBy('created_at', 'desc')->get();
+        return view('admin.blog-categories.index', compact('categories'));
+    }
+
+    public function createBlogCategory()
+    {
+        return view('admin.blog-categories.create');
+    }
+
+    public function storeBlogCategory(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:blog_categories,slug',
+            'description' => 'nullable|string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
+            'meta_keywords' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $slug = $request->slug ?: Str::slug($request->name);
+        if (BlogCategory::where('slug', $slug)->exists()) {
+            return redirect()->back()->withErrors(['slug' => 'Slug already exists'])->withInput();
+        }
+
+        BlogCategory::create([
+            'name' => $request->name,
+            'slug' => $slug,
+            'description' => $request->description,
+            'is_active' => $request->has('is_active'),
+            'meta_title' => $request->meta_title,
+            'meta_description' => $request->meta_description,
+            'meta_keywords' => $request->meta_keywords,
+        ]);
+
+        return redirect()->route('admin.blog-categories')->with('success', 'Blog category created successfully.');
+    }
+
+    public function editBlogCategory($id)
+    {
+        $category = BlogCategory::findOrFail($id);
+        return view('admin.blog-categories.edit', compact('category'));
+    }
+
+    public function updateBlogCategory(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:blog_categories,slug,' . $id,
+            'description' => 'nullable|string',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
+            'meta_keywords' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $category = BlogCategory::findOrFail($id);
+        $category->update([
+            'name' => $request->name,
+            'slug' => $request->slug ?: $category->slug,
+            'description' => $request->description,
+            'is_active' => $request->has('is_active'),
+            'meta_title' => $request->meta_title,
+            'meta_description' => $request->meta_description,
+            'meta_keywords' => $request->meta_keywords,
+        ]);
+
+        return redirect()->route('admin.blog-categories')->with('success', 'Blog category updated successfully.');
+    }
+
+    public function deleteBlogCategory($id)
+    {
+        $category = BlogCategory::findOrFail($id);
+        $category->delete();
+        return redirect()->route('admin.blog-categories')->with('success', 'Blog category deleted successfully.');
+    }
+
+    // ==================== BLOG POSTS MANAGEMENT ====================
+    public function blogs()
+    {
+        $blogs = BlogPost::with('category')->orderBy('created_at', 'desc')->get();
+        return view('admin.blogs.index', compact('blogs'));
+    }
+
+    public function createBlog()
+    {
+        $categories = BlogCategory::where('is_active', true)->orderBy('name')->get();
+        return view('admin.blogs.create', compact('categories'));
+    }
+
+    public function storeBlog(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:blog_posts,slug',
+            'category_id' => 'nullable|exists:blog_categories,id',
+            'excerpt' => 'nullable|string|max:500',
+            'content' => 'nullable|string',
+            'featured_image' => 'nullable|image|max:5120',
+            'gallery_images.*' => 'nullable|image|max:5120',
+            'is_published' => 'nullable|in:0,1',
+            'published_at' => 'nullable|date',
+            'is_featured' => 'nullable|in:0,1',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
+            'meta_keywords' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $data = $request->only([
+            'category_id','title','excerpt','content','is_published','is_featured',
+            'published_at','meta_title','meta_description','meta_keywords'
+        ]);
+        $data['slug'] = $request->slug ?: Str::slug($request->title);
+
+        if ($request->hasFile('featured_image')) {
+            $path = $request->file('featured_image')->store('blog', 'public');
+            $data['featured_image'] = $path;
+        }
+
+        $gallery = [];
+        if ($request->hasFile('gallery_images')) {
+            foreach ($request->file('gallery_images') as $file) {
+                $gallery[] = $file->store('blog/gallery', 'public');
+            }
+        }
+        if (!empty($gallery)) {
+            $data['gallery_images'] = $gallery;
+        }
+
+        $data['is_published'] = $request->input('is_published', 0) == '1';
+        $data['is_featured'] = $request->input('is_featured', 0) == '1';
+
+        $post = BlogPost::create($data);
+
+        return redirect()->route('admin.blogs')->with('success', 'Blog post created successfully.');
+    }
+
+    public function editBlog($id)
+    {
+        $post = BlogPost::findOrFail($id);
+        $categories = BlogCategory::where('is_active', true)->orderBy('name')->get();
+        return view('admin.blogs.edit', compact('post', 'categories'));
+    }
+
+    public function updateBlog(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:blog_posts,slug,' . $id,
+            'category_id' => 'nullable|exists:blog_categories,id',
+            'excerpt' => 'nullable|string|max:500',
+            'content' => 'nullable|string',
+            'featured_image' => 'nullable|image|max:5120',
+            'gallery_images.*' => 'nullable|image|max:5120',
+            'is_published' => 'nullable|in:0,1',
+            'published_at' => 'nullable|date',
+            'is_featured' => 'nullable|in:0,1',
+            'meta_title' => 'nullable|string|max:255',
+            'meta_description' => 'nullable|string|max:500',
+            'meta_keywords' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $post = BlogPost::findOrFail($id);
+
+        $data = $request->only([
+            'category_id','title','excerpt','content','is_published','is_featured',
+            'published_at','meta_title','meta_description','meta_keywords'
+        ]);
+        $data['slug'] = $request->slug ?: $post->slug;
+
+        if ($request->hasFile('featured_image')) {
+            if ($post->featured_image) {
+                Storage::disk('public')->delete($post->featured_image);
+            }
+            $data['featured_image'] = $request->file('featured_image')->store('blog', 'public');
+        }
+
+        if ($request->hasFile('gallery_images')) {
+            $gallery = is_array($post->gallery_images) ? $post->gallery_images : [];
+            foreach ($request->file('gallery_images') as $file) {
+                $gallery[] = $file->store('blog/gallery', 'public');
+            }
+            $data['gallery_images'] = $gallery;
+        }
+
+        $data['is_published'] = $request->input('is_published', 0) == '1';
+        $data['is_featured'] = $request->input('is_featured', 0) == '1';
+
+        $post->update($data);
+
+        return redirect()->route('admin.blogs')->with('success', 'Blog post updated successfully.');
+    }
+
+    public function deleteBlog($id)
+    {
+        $post = BlogPost::findOrFail($id);
+        if ($post->featured_image) {
+            Storage::disk('public')->delete($post->featured_image);
+        }
+        if (is_array($post->gallery_images)) {
+            foreach ($post->gallery_images as $img) {
+                Storage::disk('public')->delete($img);
+            }
+        }
+        $post->delete();
+        return redirect()->route('admin.blogs')->with('success', 'Blog post deleted successfully.');
     }
 }
